@@ -1,0 +1,2274 @@
+generator client {
+  provider        = "prisma-client-js"
+  output          = "../src/generated/client"
+  previewFeatures = ["interactiveTransactions"]
+  binaryTargets   = ["native", "rhel-openssl-1.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model SequelizeMeta {
+  name String @id @db.VarChar(255)
+}
+
+model access_policies {
+  access_policy_uuid                  String                                @id @db.Uuid
+  name                                String                                @db.VarChar(255)
+  description                         String                                @db.VarChar(255)
+  company_uuid                        String?                               @db.Uuid
+  companies                           companies?                            @relation(fields: [company_uuid], references: [company_uuid])
+  access_policy_group_access_policies access_policy_group_access_policies[]
+  access_policy_permissions           access_policy_permissions[]
+  company_user_access_policies        company_user_access_policies[]
+
+  @@unique([name, company_uuid], name: "access_policies_uk")
+}
+
+model access_policy_group_access_policies {
+  access_policy_group_access_policy_uuid String                @id @db.Uuid
+  access_policy_group_uuid               String?               @db.Uuid
+  access_policy_uuid                     String?               @db.Uuid
+  access_policy_groups                   access_policy_groups? @relation(fields: [access_policy_group_uuid], references: [access_policy_group_uuid])
+  access_policies                        access_policies?      @relation(fields: [access_policy_uuid], references: [access_policy_uuid])
+
+  @@unique([access_policy_group_uuid, access_policy_uuid], name: "access_policy_group_access_policies_uk")
+}
+
+model access_policy_groups {
+  access_policy_group_uuid            String                                @id @db.Uuid
+  company_uuid                        String?                               @db.Uuid
+  name                                String                                @db.VarChar(255)
+  companies                           companies?                            @relation(fields: [company_uuid], references: [company_uuid])
+  access_policy_group_access_policies access_policy_group_access_policies[]
+  company_user_access_policy_groups   company_user_access_policy_groups[]
+
+  @@unique([name, company_uuid], name: "access_policy_groups_uk")
+}
+
+model access_policy_permissions {
+  access_policy_permission_uuid String          @id @db.Uuid
+  access_policy_uuid            String          @db.Uuid
+  permission_uuid               String          @db.Uuid
+  resource_uuid                 String          @db.Uuid
+  access_policies               access_policies @relation(fields: [access_policy_uuid], references: [access_policy_uuid])
+  permissions                   permissions     @relation(fields: [permission_uuid], references: [permission_uuid])
+  resources                     resources       @relation(fields: [resource_uuid], references: [resource_uuid])
+}
+
+model administrative_division_types {
+  administrative_division_type_uuid String                     @id @db.Uuid
+  name                              String                     @unique @db.VarChar(255)
+  administrative_divisions          administrative_divisions[]
+}
+
+model administrative_divisions {
+  administrative_division_uuid      String                              @id @db.Uuid
+  level                             Int?
+  value                             String                              @db.VarChar(255)
+  administrative_division_type_uuid String                              @db.Uuid
+  administrative_division_types     administrative_division_types       @relation(fields: [administrative_division_type_uuid], references: [administrative_division_type_uuid])
+  location_administrative_divisions location_administrative_divisions[]
+
+  @@unique([level, value, administrative_division_type_uuid], name: "level_value_and_type_uk")
+}
+
+model air_freight_services {
+  air_freight_service_uuid       String                           @id @unique @db.Uuid
+  name                           String?                          @unique @db.VarChar(255)
+  airline_air_freight_services   airline_air_freight_services[]
+  forwarder_air_freight_services forwarder_air_freight_services[]
+}
+
+model air_mass_measures {
+  air_mass_measure_uuid String       @id @db.Uuid
+  name                  String       @db.VarChar(255)
+  air_routes            air_routes[]
+}
+
+model air_rate_air_rate_custom_fields {
+  air_rate_air_rate_custom_field_uuid String                 @id @db.Uuid
+  value                               String?
+  air_rate_uuid                       String                 @db.Uuid
+  air_rate_custom_field_uuid          String                 @db.Uuid
+  air_rate_custom_fields              air_rate_custom_fields @relation(fields: [air_rate_custom_field_uuid], references: [air_rate_custom_field_uuid])
+  air_rates                           air_rates              @relation(fields: [air_rate_uuid], references: [air_rate_uuid])
+
+  @@unique([air_rate_uuid, air_rate_custom_field_uuid], name: "air_rate_and_air_rate_custom_field_uk")
+}
+
+model air_rate_commodities {
+  air_rate_commodity_uuid String      @id @db.Uuid
+  name                    String      @db.VarChar(255)
+  air_rates               air_rates[]
+}
+
+model air_rate_custom_fields {
+  air_rate_custom_field_uuid      String                            @id @db.Uuid
+  field                           String?
+  company_uuid                    String                            @db.Uuid
+  companies                       companies                         @relation(fields: [company_uuid], references: [company_uuid])
+  air_rate_air_rate_custom_fields air_rate_air_rate_custom_fields[]
+
+  @@unique([field, company_uuid], name: "air_company_and_field_uk")
+}
+
+model air_rate_types {
+  air_rate_type_uuid String      @id @db.Uuid
+  name               String      @db.VarChar(255)
+  air_rates          air_rates[]
+}
+
+model air_rates {
+  air_rate_uuid                   String                            @id @db.Uuid
+  minimum                         Float?
+  fee                             Float?
+  profit                          Float?
+  minimum_profit                  Float?
+  minimum_weight                  Float?
+  maximum_weight                  Float?
+  air_route_uuid                  String                            @db.Uuid
+  air_rate_type_uuid              String?                           @db.Uuid
+  air_rate_commodity_uuid         String?                           @db.Uuid
+  air_rate_commodities            air_rate_commodities?             @relation(fields: [air_rate_commodity_uuid], references: [air_rate_commodity_uuid])
+  air_rate_types                  air_rate_types?                   @relation(fields: [air_rate_type_uuid], references: [air_rate_type_uuid])
+  air_routes                      air_routes                        @relation(fields: [air_route_uuid], references: [air_route_uuid])
+  air_rate_air_rate_custom_fields air_rate_air_rate_custom_fields[]
+}
+
+model air_route_customer_types {
+  air_route_customer_type_uuid String        @id @db.Uuid
+  air_route_uuid               String        @db.Uuid
+  company_type_uuid            String        @db.Uuid
+  air_routes                   air_routes    @relation(fields: [air_route_uuid], references: [air_route_uuid])
+  company_types                company_types @relation(fields: [company_type_uuid], references: [company_type_uuid])
+
+  @@unique([company_type_uuid, air_route_uuid], name: "air_route_customer_type_uk")
+}
+
+model air_route_customers {
+  air_route_customer_uuid String     @id @db.Uuid
+  air_route_uuid          String     @db.Uuid
+  company_uuid            String     @db.Uuid
+  air_routes              air_routes @relation(fields: [air_route_uuid], references: [air_route_uuid])
+  companies               companies  @relation(fields: [company_uuid], references: [company_uuid])
+
+  @@unique([air_route_uuid, company_uuid], name: "air_route_and_customer_uk")
+}
+
+model air_route_week_days {
+  week_day_uuid  String     @id @db.Uuid
+  week_day       Int?
+  air_route_uuid String     @db.Uuid
+  air_routes     air_routes @relation(fields: [air_route_uuid], references: [air_route_uuid])
+  times          times[]
+}
+
+model air_routes {
+  air_route_uuid                                       String                     @id @db.Uuid
+  effective_on                                         DateTime?                  @db.Timestamptz(6)
+  expires_on                                           DateTime?                  @db.Timestamptz(6)
+  transit_time_from                                    Int?
+  transit_time_to                                      Int?
+  notes                                                String?                    @db.VarChar(250)
+  restrictions                                         String?                    @db.VarChar(250)
+  published                                            Boolean?
+  public                                               Boolean?
+  company_uuid                                         String                     @db.Uuid
+  carrier_company_uuid                                 String?                    @db.Uuid
+  carrier_unregistered_company_uuid                    String?                    @db.Uuid
+  flight_uuid                                          String?                    @db.Uuid
+  air_mass_measure_uuid                                String?                    @db.Uuid
+  currency_uuid                                        String?                    @db.Uuid
+  air_mass_measures                                    air_mass_measures?         @relation(fields: [air_mass_measure_uuid], references: [air_mass_measure_uuid])
+  companies_air_routes_carrier_company_uuidTocompanies companies?                 @relation("air_routes_carrier_company_uuidTocompanies", fields: [carrier_company_uuid], references: [company_uuid])
+  unregistered_companies                               unregistered_companies?    @relation(fields: [carrier_unregistered_company_uuid], references: [unregistered_company_uuid])
+  companies_air_routes_company_uuidTocompanies         companies                  @relation("air_routes_company_uuidTocompanies", fields: [company_uuid], references: [company_uuid])
+  currencies                                           currencies?                @relation(fields: [currency_uuid], references: [currency_uuid])
+  flights                                              flights?                   @relation(fields: [flight_uuid], references: [flight_uuid])
+  air_rates                                            air_rates[]
+  air_route_customer_types                             air_route_customer_types[]
+  air_route_customers                                  air_route_customers[]
+  air_route_week_days                                  air_route_week_days[]
+}
+
+model airline_air_freight_services {
+  airline_air_freight_service_uuid String               @id @unique @db.Uuid
+  airline_uuid                     String               @db.Uuid
+  air_freight_service_uuid         String               @db.Uuid
+  air_freight_services             air_freight_services @relation(fields: [air_freight_service_uuid], references: [air_freight_service_uuid])
+  airlines                         airlines             @relation(fields: [airline_uuid], references: [airline_uuid])
+
+  @@unique([airline_uuid, air_freight_service_uuid], name: "airline_air_freight_service_uk")
+}
+
+model airline_origin_airports {
+  airline_origin_airport_uuid String   @id @unique @db.Uuid
+  airline_uuid                String   @db.Uuid
+  airport_uuid                String   @db.Uuid
+  airlines                    airlines @relation(fields: [airline_uuid], references: [airline_uuid])
+  airports                    airports @relation(fields: [airport_uuid], references: [airport_uuid])
+
+  @@unique([airline_uuid, airport_uuid], name: "airline_origin_airport_uk")
+}
+
+model airlines {
+  airline_uuid                 String                         @id @unique @db.Uuid
+  airline_prefix               String?                        @db.VarChar(255)
+  iata_code                    String?                        @db.VarChar(255)
+  company_uuid                 String                         @unique @db.Uuid
+  companies                    companies                      @relation(fields: [company_uuid], references: [company_uuid])
+  airline_air_freight_services airline_air_freight_services[]
+  airline_origin_airports      airline_origin_airports[]
+}
+
+model airports {
+  airport_uuid                       String                               @id @unique @db.Uuid
+  iata_code                          String?                              @unique @db.VarChar(255)
+  name                               String?                              @db.VarChar(255)
+  location                           String?                              @db.VarChar(255)
+  country_uuid                       String?                              @db.Uuid
+  countries                          countries?                           @relation(fields: [country_uuid], references: [country_uuid])
+  airline_origin_airports            airline_origin_airports[]
+  airport_location                   airport_location[]
+  exporter_destination_airports      exporter_destination_airports[]
+  exporter_origin_airports           exporter_origin_airports[]
+  flight_destinations                flight_destinations[]
+  flights                            flights[]
+  forwarder_origin_airports          forwarder_origin_airports[]
+  general_sale_agent_origin_airports general_sale_agent_origin_airports[]
+  importer_destination_airports      importer_destination_airports[]
+  importer_origin_airports           importer_origin_airports[]
+  third_party_airports               third_party_airports[]
+}
+
+model api_tokens {
+  api_token_uuid String    @id @db.Uuid
+  user_uuid      String    @db.Uuid
+  token          String?   @db.VarChar(64)
+  expires_at     DateTime? @db.Timestamptz(6)
+  created_at     DateTime  @db.Timestamptz(6)
+  users          users     @relation(fields: [user_uuid], references: [user_uuid])
+}
+
+model bank_accounts {
+  bank_account_uuid     String                  @id @db.Uuid
+  beneficiary_name      String?                 @db.VarChar(255)
+  bank_name             String?                 @db.VarChar(255)
+  account_number        String?                 @db.VarChar(255)
+  swift_code            String?                 @db.VarChar(255)
+  iban                  String?                 @db.VarChar(255)
+  routing_number        String?                 @db.VarChar(255)
+  bank_address_uuid     String?                 @db.Uuid
+  currency_uuid         String?                 @db.Uuid
+  locations             locations?              @relation(fields: [bank_address_uuid], references: [location_uuid])
+  currencies            currencies?             @relation(fields: [currency_uuid], references: [currency_uuid])
+  company_bank_accounts company_bank_accounts[]
+  user_bank_accounts    user_bank_accounts[]
+}
+
+model cargo_types {
+  cargo_type_uuid           String                      @id @unique @db.Uuid
+  name                      String?                     @unique @db.VarChar(255)
+  exporter_cargo_types      exporter_cargo_types[]
+  forwarder_cargo_types     forwarder_cargo_types[]
+  importer_cargo_types      importer_cargo_types[]
+  trucking_cargo_types      trucking_cargo_types[]
+  warehouse_3pl_cargo_types warehouse_3pl_cargo_types[]
+}
+
+model comments {
+  comment_uuid            String                    @id @db.Uuid
+  text                    String
+  created_at              DateTime                  @db.Timestamptz(6)
+  last_update             DateTime?                 @db.Timestamptz(6)
+  author_user_uuid        String                    @db.Uuid
+  parent_comment_uuid     String?                   @db.Uuid
+  file                    String?
+  users                   users                     @relation(fields: [author_user_uuid], references: [user_uuid])
+  comments                comments?                 @relation("commentsTocomments_parent_comment_uuid", fields: [parent_comment_uuid], references: [comment_uuid])
+  other_comments          comments[]                @relation("commentsTocomments_parent_comment_uuid")
+  parcel_booking_comments parcel_booking_comments[]
+}
+
+model companies {
+  company_uuid                                                                       String                                @id @unique @db.Uuid
+  legal_name                                                                         String?                               @unique @db.VarChar(255)
+  fantasy_name                                                                       String?                               @unique @db.VarChar(255)
+  tax_id                                                                             String?                               @unique @db.VarChar(255)
+  logo                                                                               String?                               @db.VarChar(255)
+  icon                                                                               String?                               @db.VarChar(255)
+  currency_uuid                                                                      String?                               @db.Uuid
+  alirok_terms_agreement                                                             Boolean?
+  user_uuid                                                                          String?                               @db.Uuid
+  company_type_uuid                                                                  String?                               @db.Uuid
+  onboarding_finished                                                                Boolean?                              @default(false)
+  email                                                                              String?                               @db.VarChar(255)
+  phone                                                                              Json?                                 @db.Json
+  headquarter_address_uuid                                                           String?                               @db.Uuid
+  is_registered                                                                      Boolean                               @default(true)
+  company_types                                                                      company_types?                        @relation(fields: [company_type_uuid], references: [company_type_uuid])
+  currencies                                                                         currencies?                           @relation(fields: [currency_uuid], references: [currency_uuid])
+  locations                                                                          locations?                            @relation(fields: [headquarter_address_uuid], references: [location_uuid])
+  users                                                                              users?                                @relation(fields: [user_uuid], references: [user_uuid])
+  access_policies                                                                    access_policies[]
+  access_policy_groups                                                               access_policy_groups[]
+  air_rate_custom_fields                                                             air_rate_custom_fields[]
+  air_route_customers                                                                air_route_customers[]
+  air_routes_air_routes_carrier_company_uuidTocompanies                              air_routes[]                          @relation("air_routes_carrier_company_uuidTocompanies")
+  air_routes_air_routes_company_uuidTocompanies                                      air_routes[]                          @relation("air_routes_company_uuidTocompanies")
+  airlines                                                                           airlines?
+  company_bank_accounts                                                              company_bank_accounts[]
+  company_emails                                                                     company_emails[]
+  company_integrations                                                               company_integrations[]
+  company_relationship_attachments                                                   company_relationship_attachments[]
+  company_relationship_custom_fields                                                 company_relationship_custom_fields[]
+  company_relationships_companiesTocompany_relationships_addressee_company_uuid      company_relationships[]               @relation("companiesTocompany_relationships_addressee_company_uuid")
+  company_relationships_companiesTocompany_relationships_customer_company_uuid       company_relationships[]               @relation("companiesTocompany_relationships_customer_company_uuid")
+  company_relationships_companiesTocompany_relationships_requester_company_uuid      company_relationships[]               @relation("companiesTocompany_relationships_requester_company_uuid")
+  company_relationships_companiesTocompany_relationships_vendor_company_uuid         company_relationships[]               @relation("companiesTocompany_relationships_vendor_company_uuid")
+  company_users                                                                      company_users[]
+  drivers                                                                            drivers[]
+  drop_off_location_carrier_companies                                                drop_off_location_carrier_companies[]
+  drop_off_locations                                                                 drop_off_locations[]
+  exporters                                                                          exporters?
+  forwarders                                                                         forwarders?
+  fuel_surcharge_fees                                                                fuel_surcharge_fees?
+  general_sale_agents                                                                general_sale_agents?
+  importers                                                                          importers?
+  insurances                                                                         insurances?
+  parcel_members                                                                     parcel_members[]
+  parcel_members_bkp                                                                 parcel_members_bkp[]
+  parcel_profit_setup_customers                                                      parcel_profit_setup_customers[]
+  parcel_profit_setups_companiesToparcel_profit_setups_company_uuid                  parcel_profit_setups[]                @relation("companiesToparcel_profit_setups_company_uuid")
+  parcel_profit_setups_companiesToparcel_profit_setups_vendor_company_uuid           parcel_profit_setups[]                @relation("companiesToparcel_profit_setups_vendor_company_uuid")
+  parcel_rate_custom_fields                                                          parcel_rate_custom_fields[]
+  parcel_route_customers                                                             parcel_route_customers[]
+  parcel_routes_companiesToparcel_routes_carrier_company_uuid                        parcel_routes[]                       @relation("companiesToparcel_routes_carrier_company_uuid")
+  parcel_routes_companiesToparcel_routes_company_uuid                                parcel_routes[]                       @relation("companiesToparcel_routes_company_uuid")
+  parcel_routes_companiesToparcel_routes_vendor_company_uuid                         parcel_routes[]                       @relation("companiesToparcel_routes_vendor_company_uuid")
+  rate_types                                                                         rate_types[]
+  relationship_invitations_companiesTorelationship_invitations_customer_company_uuid relationship_invitations[]            @relation("companiesTorelationship_invitations_customer_company_uuid")
+  relationship_invitations_companiesTorelationship_invitations_vendor_company_uuid   relationship_invitations[]            @relation("companiesTorelationship_invitations_vendor_company_uuid")
+  screening_fees                                                                     screening_fees?
+  service                                                                            service[]
+  shipping_lines                                                                     shipping_lines?
+  third_parties                                                                      third_parties?
+  truckings                                                                          truckings?
+  value_services                                                                     value_services[]
+  value_services_companies                                                           value_services_companies[]
+  warehouse_3pls                                                                     warehouse_3pls?
+}
+
+model company_bank_accounts {
+  user_bank_account_uuid String        @id @db.Uuid
+  company_uuid           String        @db.Uuid
+  bank_account_uuid      String        @db.Uuid
+  bank_accounts          bank_accounts @relation(fields: [bank_account_uuid], references: [bank_account_uuid])
+  companies              companies     @relation(fields: [company_uuid], references: [company_uuid])
+}
+
+model company_emails {
+  company_email_uuid String      @id @db.Uuid
+  email_address      String      @db.VarChar(255)
+  company_uuid       String      @db.Uuid
+  email_type_uuid    String      @db.Uuid
+  companies          companies   @relation(fields: [company_uuid], references: [company_uuid])
+  email_types        email_types @relation(fields: [email_type_uuid], references: [email_type_uuid])
+
+  @@unique([email_address, company_uuid, email_type_uuid], name: "company_emails_uk")
+}
+
+model company_integrations {
+  company_integration_uuid String          @id @db.Uuid
+  key                      String          @db.VarChar(255)
+  company_uuid             String          @db.Uuid
+  integration_uuid         String          @db.Uuid
+  companies                companies       @relation(fields: [company_uuid], references: [company_uuid])
+  integrations             integrations    @relation(fields: [integration_uuid], references: [integration_uuid])
+  parcel_routes            parcel_routes[]
+
+  @@unique([company_uuid, integration_uuid], name: "company_and_integration_uk")
+}
+
+model company_relationship_attachment_custom_fields {
+  company_relationship_attachment_custom_field_uuid String                             @id @db.Uuid
+  company_relationship_attachment_uuid              String                             @db.Uuid
+  company_relationship_custom_field_uuid            String                             @db.Uuid
+  value                                             String                             @db.VarChar(255)
+  company_relationship_attachments                  company_relationship_attachments   @relation(fields: [company_relationship_attachment_uuid], references: [company_relationship_attachment_uuid])
+  company_relationship_custom_fields                company_relationship_custom_fields @relation(fields: [company_relationship_custom_field_uuid], references: [company_relationship_custom_field_uuid])
+
+  @@unique([company_relationship_attachment_uuid, company_relationship_custom_field_uuid], name: "company_relationship_attachment_and_custom_field_uk")
+  @@map("c_r_a_c_f_fkey")
+}
+
+model company_relationship_attachments {
+  company_relationship_attachment_uuid          String                                          @id @db.Uuid
+  notes                                         String?                                         @db.VarChar(255)
+  company_relationship_uuid                     String                                          @db.Uuid
+  company_uuid                                  String                                          @db.Uuid
+  company_relationships                         company_relationships                           @relation(fields: [company_relationship_uuid], references: [company_relationship_uuid])
+  companies                                     companies                                       @relation(fields: [company_uuid], references: [company_uuid])
+  company_relationship_attachment_custom_fields company_relationship_attachment_custom_fields[]
+
+  @@unique([company_relationship_uuid, company_uuid], name: "company_relationship_and_company_uk")
+}
+
+model company_relationship_custom_fields {
+  company_relationship_custom_field_uuid        String                                          @id @db.Uuid
+  field                                         String                                          @unique @db.VarChar(255)
+  display                                       Boolean?
+  company_uuid                                  String?                                         @db.Uuid
+  companies                                     companies?                                      @relation(fields: [company_uuid], references: [company_uuid])
+  company_relationship_attachment_custom_fields company_relationship_attachment_custom_fields[]
+}
+
+model company_relationships {
+  company_relationship_uuid                                         String                               @id @db.Uuid
+  created_at                                                        DateTime?                            @db.Timestamptz(6)
+  active                                                            Boolean?                             @default(true)
+  contact_person                                                    String?                              @db.VarChar(255)
+  credit_line                                                       Float?
+  payment_term                                                      String?                              @db.VarChar(255)
+  customer_company_uuid                                             String                               @db.Uuid
+  vendor_company_uuid                                               String                               @db.Uuid
+  requester_company_uuid                                            String                               @db.Uuid
+  addressee_company_uuid                                            String                               @db.Uuid
+  currency_uuid                                                     String?                              @db.Uuid
+  connected                                                         enum_company_relationships_connected @default(PENDING)
+  companies_companiesTocompany_relationships_addressee_company_uuid companies                            @relation("companiesTocompany_relationships_addressee_company_uuid", fields: [addressee_company_uuid], references: [company_uuid])
+  currencies                                                        currencies?                          @relation(fields: [currency_uuid], references: [currency_uuid])
+  companies_companiesTocompany_relationships_customer_company_uuid  companies                            @relation("companiesTocompany_relationships_customer_company_uuid", fields: [customer_company_uuid], references: [company_uuid])
+  companies_companiesTocompany_relationships_requester_company_uuid companies                            @relation("companiesTocompany_relationships_requester_company_uuid", fields: [requester_company_uuid], references: [company_uuid])
+  companies_companiesTocompany_relationships_vendor_company_uuid    companies                            @relation("companiesTocompany_relationships_vendor_company_uuid", fields: [vendor_company_uuid], references: [company_uuid])
+  company_relationship_attachments                                  company_relationship_attachments[]
+
+  @@unique([customer_company_uuid, vendor_company_uuid], name: "company_relationship_uk")
+}
+
+model company_types {
+  company_type_uuid                  String                               @id @unique @db.Uuid
+  name                               String                               @unique @db.VarChar(255)
+  display                            Boolean?
+  air_route_customer_types           air_route_customer_types[]
+  companies                          companies[]
+  parcel_profit_setup_customer_types parcel_profit_setup_customer_types[]
+  parcel_route_customer_types        parcel_route_customer_types[]
+  value_services_company_types       value_services_company_types[]
+}
+
+model company_user_access_policies {
+  company_user_access_policy_uuid String          @id @db.Uuid
+  company_user_uuid               String          @db.Uuid
+  access_policy_uuid              String          @db.Uuid
+  access_policies                 access_policies @relation(fields: [access_policy_uuid], references: [access_policy_uuid])
+  company_users                   company_users   @relation(fields: [company_user_uuid], references: [company_user_uuid])
+}
+
+model company_user_access_policy_groups {
+  company_user_access_policy_group_uuid String               @id @db.Uuid
+  company_user_uuid                     String               @db.Uuid
+  access_policy_group_uuid              String               @db.Uuid
+  access_policy_groups                  access_policy_groups @relation(fields: [access_policy_group_uuid], references: [access_policy_group_uuid])
+  company_users                         company_users        @relation(fields: [company_user_uuid], references: [company_user_uuid])
+
+  @@unique([company_user_uuid, access_policy_group_uuid], name: "company_user_access_policy_groups_uk")
+}
+
+model company_users {
+  company_user_uuid                 String                              @id @db.Uuid
+  company_uuid                      String                              @db.Uuid
+  user_uuid                         String                              @db.Uuid
+  companies                         companies                           @relation(fields: [company_uuid], references: [company_uuid])
+  users                             users                               @relation(fields: [user_uuid], references: [user_uuid])
+  company_user_access_policies      company_user_access_policies[]
+  company_user_access_policy_groups company_user_access_policy_groups[]
+
+  @@unique([company_uuid, user_uuid], name: "company_users_uk")
+}
+
+model countries {
+  country_uuid String       @id @unique @db.Uuid
+  code         String       @unique @db.VarChar(255)
+  name         String       @unique @db.VarChar(255)
+  airports     airports[]
+  dial_codes   dial_codes[]
+  ports        ports[]
+}
+
+model coverages {
+  coverage_uuid                                                    String          @id @db.Uuid
+  name                                                             String          @unique @db.VarChar(255)
+  parcel_routes_coveragesToparcel_routes_destination_coverage_uuid parcel_routes[] @relation("coveragesToparcel_routes_destination_coverage_uuid")
+  parcel_routes_coveragesToparcel_routes_origin_coverage_uuid      parcel_routes[] @relation("coveragesToparcel_routes_origin_coverage_uuid")
+}
+
+model currencies {
+  currency_uuid         String                  @id @unique @db.Uuid
+  name                  String?                 @db.VarChar(255)
+  code                  String?                 @db.VarChar(255)
+  symbol                String?                 @db.VarChar(255)
+  air_routes            air_routes[]
+  bank_accounts         bank_accounts[]
+  companies             companies[]
+  company_relationships company_relationships[]
+  parcel_routes         parcel_routes[]
+  profits               profits[]
+
+  @@unique([code, name, symbol], name: "currencies_currency_uk")
+}
+
+model dial_codes {
+  dial_code_uuid String    @id @db.Uuid
+  dial_code      Int?
+  country_uuid   String    @db.Uuid
+  countries      countries @relation(fields: [country_uuid], references: [country_uuid])
+}
+
+model email_types {
+  email_type_uuid String           @id @db.Uuid
+  name            String           @unique @db.VarChar(255)
+  company_emails  company_emails[]
+}
+
+model exporter_cargo_types {
+  exporter_cargo_type_uuid String      @id @unique @db.Uuid
+  exporter_uuid            String      @db.Uuid
+  cargo_type_uuid          String      @db.Uuid
+  cargo_types              cargo_types @relation(fields: [cargo_type_uuid], references: [cargo_type_uuid])
+  exporters                exporters   @relation(fields: [exporter_uuid], references: [exporter_uuid])
+
+  @@unique([exporter_uuid, cargo_type_uuid], name: "exporter_cargo_type_uk")
+}
+
+model exporter_destination_airports {
+  exporter_destination_airport_uuid String    @id @unique @db.Uuid
+  exporter_uuid                     String    @db.Uuid
+  airport_uuid                      String    @db.Uuid
+  airports                          airports  @relation(fields: [airport_uuid], references: [airport_uuid])
+  exporters                         exporters @relation(fields: [exporter_uuid], references: [exporter_uuid])
+
+  @@unique([exporter_uuid, airport_uuid], name: "exporter_destination_airport_uk")
+}
+
+model exporter_destination_ports {
+  exporter_destination_port_uuid String    @id @unique @db.Uuid
+  exporter_uuid                  String    @db.Uuid
+  port_uuid                      String    @db.Uuid
+  exporters                      exporters @relation(fields: [exporter_uuid], references: [exporter_uuid])
+  ports                          ports     @relation(fields: [port_uuid], references: [port_uuid])
+
+  @@unique([exporter_uuid, port_uuid], name: "exporter_destination_port_uk")
+}
+
+model exporter_origin_airports {
+  exporter_origin_airport_uuid String    @id @unique @db.Uuid
+  exporter_uuid                String    @db.Uuid
+  airport_uuid                 String    @db.Uuid
+  airports                     airports  @relation(fields: [airport_uuid], references: [airport_uuid])
+  exporters                    exporters @relation(fields: [exporter_uuid], references: [exporter_uuid])
+
+  @@unique([exporter_uuid, airport_uuid], name: "exporter_origin_airport_uk")
+}
+
+model exporter_origin_ports {
+  exporter_origin_port_uuid String    @id @unique @db.Uuid
+  exporter_uuid             String    @db.Uuid
+  port_uuid                 String    @db.Uuid
+  exporters                 exporters @relation(fields: [exporter_uuid], references: [exporter_uuid])
+  ports                     ports     @relation(fields: [port_uuid], references: [port_uuid])
+
+  @@unique([exporter_uuid, port_uuid], name: "exporter_origin_port_uk")
+}
+
+model exporters {
+  exporter_uuid                 String                          @id @unique @db.Uuid
+  company_uuid                  String                          @unique @db.Uuid
+  mass_measure_uuid             String?                         @db.Uuid
+  length_measure_uuid           String?                         @db.Uuid
+  companies                     companies                       @relation(fields: [company_uuid], references: [company_uuid])
+  length_measures               length_measures?                @relation(fields: [length_measure_uuid], references: [length_measure_uuid])
+  mass_measures                 mass_measures?                  @relation(fields: [mass_measure_uuid], references: [mass_measure_uuid])
+  exporter_cargo_types          exporter_cargo_types[]
+  exporter_destination_airports exporter_destination_airports[]
+  exporter_destination_ports    exporter_destination_ports[]
+  exporter_origin_airports      exporter_origin_airports[]
+  exporter_origin_ports         exporter_origin_ports[]
+}
+
+model feedbacks {
+  feedback_uuid           String              @id @db.Uuid
+  rating                  Float?
+  message                 String?
+  user_uuid               String?             @db.Uuid
+  created_at              DateTime            @db.Timestamptz(6)
+  parcel_rate_source_uuid String              @db.Uuid
+  service_code            String
+  company_name            String?
+  approval                String?
+  tracking_code_id        String?             @unique
+  parcel_rate_sources     parcel_rate_sources @relation(fields: [parcel_rate_source_uuid], references: [parcel_rate_source_uuid])
+  tracking_code           tracking_code?      @relation(fields: [tracking_code_id], references: [tracking_code])
+  users                   users?              @relation(fields: [user_uuid], references: [user_uuid])
+}
+
+model flight_destinations {
+  flight_destination_uuid  String   @id @db.Uuid
+  destination_airport_uuid String   @db.Uuid
+  flight_uuid              String   @db.Uuid
+  airports                 airports @relation(fields: [destination_airport_uuid], references: [airport_uuid])
+  flights                  flights  @relation(fields: [flight_uuid], references: [flight_uuid])
+
+  @@unique([destination_airport_uuid, flight_uuid], name: "flight_destination_airport_and_flight_uk")
+}
+
+model flight_types {
+  flight_type_uuid String @id @db.Uuid
+  name             String @db.VarChar(20)
+}
+
+model flights {
+  flight_uuid         String                @id @db.Uuid
+  flight_number       String?               @db.Char(5)
+  flight_type_uuid    String?               @db.Uuid
+  airport_origin_uuid String?               @db.Uuid
+  airports            airports?             @relation(fields: [airport_origin_uuid], references: [airport_uuid])
+  air_routes          air_routes[]
+  flight_destinations flight_destinations[]
+}
+
+model forwarder_air_freight_services {
+  forwarder_air_freight_service_uuid String               @id @unique @db.Uuid
+  forwarder_uuid                     String               @db.Uuid
+  air_freight_service_uuid           String               @db.Uuid
+  air_freight_services               air_freight_services @relation(fields: [air_freight_service_uuid], references: [air_freight_service_uuid])
+  forwarders                         forwarders           @relation(fields: [forwarder_uuid], references: [forwarder_uuid])
+
+  @@unique([forwarder_uuid, air_freight_service_uuid], name: "forwarder_air_freight_service_uk")
+}
+
+model forwarder_cargo_types {
+  forwarder_cargo_type_uuid String      @id @unique @db.Uuid
+  forwarder_uuid            String      @db.Uuid
+  cargo_type_uuid           String      @db.Uuid
+  cargo_types               cargo_types @relation(fields: [cargo_type_uuid], references: [cargo_type_uuid])
+  forwarders                forwarders  @relation(fields: [forwarder_uuid], references: [forwarder_uuid])
+
+  @@unique([forwarder_uuid, cargo_type_uuid], name: "forwarder_cargo_type_uk")
+}
+
+model forwarder_land_freight_services {
+  forwarder_land_freight_service_uuid String                @id @unique @db.Uuid
+  forwarder_uuid                      String                @db.Uuid
+  land_freight_service_uuid           String                @db.Uuid
+  forwarders                          forwarders            @relation(fields: [forwarder_uuid], references: [forwarder_uuid])
+  land_freight_services               land_freight_services @relation(fields: [land_freight_service_uuid], references: [land_freight_service_uuid])
+
+  @@unique([forwarder_uuid, land_freight_service_uuid], name: "forwarder_land_freight_service_uk")
+}
+
+model forwarder_land_service_areas {
+  forwarder_land_service_area_uuid String             @id @unique @db.Uuid
+  forwarder_uuid                   String             @db.Uuid
+  land_service_area_uuid           String             @db.Uuid
+  forwarders                       forwarders         @relation(fields: [forwarder_uuid], references: [forwarder_uuid])
+  land_service_areas               land_service_areas @relation(fields: [land_service_area_uuid], references: [land_service_area_uuid])
+
+  @@unique([forwarder_uuid, land_service_area_uuid], name: "forwarder_land_service_area_uk")
+}
+
+model forwarder_origin_airports {
+  forwarder_origin_airport_uuid String     @id @unique @db.Uuid
+  forwarder_uuid                String     @db.Uuid
+  airport_uuid                  String     @db.Uuid
+  airports                      airports   @relation(fields: [airport_uuid], references: [airport_uuid])
+  forwarders                    forwarders @relation(fields: [forwarder_uuid], references: [forwarder_uuid])
+
+  @@unique([forwarder_uuid, airport_uuid], name: "forwarder_origin_airport_uk")
+}
+
+model forwarder_origin_ports {
+  forwarder_origin_port_uuid String     @id @unique @db.Uuid
+  forwarder_uuid             String     @db.Uuid
+  port_uuid                  String     @db.Uuid
+  forwarders                 forwarders @relation(fields: [forwarder_uuid], references: [forwarder_uuid])
+  ports                      ports      @relation(fields: [port_uuid], references: [port_uuid])
+
+  @@unique([forwarder_uuid, port_uuid], name: "forwarder_origin_port_uk")
+}
+
+model forwarder_parcel_freight_services {
+  forwarder_parcel_freight_service_uuid String                  @id @unique @db.Uuid
+  forwarder_uuid                        String                  @db.Uuid
+  parcel_freight_service_uuid           String                  @db.Uuid
+  forwarders                            forwarders              @relation(fields: [forwarder_uuid], references: [forwarder_uuid])
+  parcel_freight_services               parcel_freight_services @relation(fields: [parcel_freight_service_uuid], references: [parcel_freight_service_uuid])
+
+  @@unique([forwarder_uuid, parcel_freight_service_uuid], name: "forwarder_parcel_freight_service_uk")
+}
+
+model forwarder_parcel_service_area {
+  forwarder_parcel_service_area_uuid String               @id @unique @db.Uuid
+  forwarder_uuid                     String               @db.Uuid
+  parcel_service_area_uuid           String               @db.Uuid
+  forwarders                         forwarders           @relation(fields: [forwarder_uuid], references: [forwarder_uuid])
+  parcel_service_areas               parcel_service_areas @relation(fields: [parcel_service_area_uuid], references: [parcel_service_area_uuid])
+
+  @@unique([forwarder_uuid, parcel_service_area_uuid], name: "forwarder_parcel_service_area_uk")
+}
+
+model forwarder_sea_freight_services {
+  forwarder_sea_freight_service_uuid String               @id @unique @db.Uuid
+  forwarder_uuid                     String               @db.Uuid
+  sea_freight_service_uuid           String               @db.Uuid
+  forwarders                         forwarders           @relation(fields: [forwarder_uuid], references: [forwarder_uuid])
+  sea_freight_services               sea_freight_services @relation(fields: [sea_freight_service_uuid], references: [sea_freight_service_uuid])
+
+  @@unique([forwarder_uuid, sea_freight_service_uuid], name: "forwarder_sea_freight_service_uk")
+}
+
+model forwarder_warehouse_services {
+  forwarder_warehouse_service_uuid String             @id @unique @db.Uuid
+  forwarder_uuid                   String             @db.Uuid
+  warehouse_service_uuid           String             @db.Uuid
+  forwarders                       forwarders         @relation(fields: [forwarder_uuid], references: [forwarder_uuid])
+  warehouse_services               warehouse_services @relation(fields: [warehouse_service_uuid], references: [warehouse_service_uuid])
+
+  @@unique([forwarder_uuid, warehouse_service_uuid], name: "forwarder_warehouse_service_uk")
+}
+
+model forwarders {
+  forwarder_uuid                    String                              @id @unique @db.Uuid
+  warehouse_delivery_address        String?                             @db.VarChar(255)
+  trucking_license_number           String?                             @db.VarChar(255)
+  airline_license_number            String?                             @db.VarChar(255)
+  sea_license_number                String?                             @db.VarChar(255)
+  parcel_license_number             String?                             @db.VarChar(255)
+  company_uuid                      String                              @unique @db.Uuid
+  companies                         companies                           @relation(fields: [company_uuid], references: [company_uuid])
+  forwarder_air_freight_services    forwarder_air_freight_services[]
+  forwarder_cargo_types             forwarder_cargo_types[]
+  forwarder_land_freight_services   forwarder_land_freight_services[]
+  forwarder_land_service_areas      forwarder_land_service_areas[]
+  forwarder_origin_airports         forwarder_origin_airports[]
+  forwarder_origin_ports            forwarder_origin_ports[]
+  forwarder_parcel_freight_services forwarder_parcel_freight_services[]
+  forwarder_parcel_service_area     forwarder_parcel_service_area[]
+  forwarder_sea_freight_services    forwarder_sea_freight_services[]
+  forwarder_warehouse_services      forwarder_warehouse_services[]
+}
+
+model fuel_surcharge_fees {
+  fuel_surcharge_fee_uuid String          @id @db.Uuid
+  name                    String?         @db.VarChar(255)
+  minimum                 Float?
+  value                   Float?
+  company_uuid            String          @unique @db.Uuid
+  companies               companies       @relation(fields: [company_uuid], references: [company_uuid])
+  parcel_routes           parcel_routes[]
+}
+
+model general_sale_agent_origin_airports {
+  general_sale_agent_origin_airport_uuid String              @id @unique @db.Uuid
+  general_sale_agent_uuid                String              @db.Uuid
+  airport_uuid                           String              @db.Uuid
+  airports                               airports            @relation(fields: [airport_uuid], references: [airport_uuid])
+  general_sale_agents                    general_sale_agents @relation(fields: [general_sale_agent_uuid], references: [general_sale_agent_uuid])
+
+  @@unique([general_sale_agent_uuid, airport_uuid], name: "general_sale_agent_origin_airport_uk")
+}
+
+model general_sale_agent_origin_ports {
+  general_sale_agent_origin_port_uuid String              @id @unique @db.Uuid
+  general_sale_agent_uuid             String              @db.Uuid
+  port_uuid                           String              @db.Uuid
+  general_sale_agents                 general_sale_agents @relation(fields: [general_sale_agent_uuid], references: [general_sale_agent_uuid])
+  ports                               ports               @relation(fields: [port_uuid], references: [port_uuid])
+
+  @@unique([general_sale_agent_uuid, port_uuid], name: "general_sale_agent_origin_port_uk")
+}
+
+model general_sale_agents {
+  general_sale_agent_uuid            String                               @id @unique @db.Uuid
+  company_uuid                       String                               @unique @db.Uuid
+  companies                          companies                            @relation(fields: [company_uuid], references: [company_uuid])
+  general_sale_agent_origin_airports general_sale_agent_origin_airports[]
+  general_sale_agent_origin_ports    general_sale_agent_origin_ports[]
+}
+
+model hts_codes {
+  hts_code_uuid                String                         @id @db.Uuid
+  htsno                        String                         @unique @db.VarChar(255)
+  description                  String
+  prohibited                   Boolean
+  user_custom_hts_descriptions user_custom_hts_descriptions[]
+}
+
+model importer_cargo_types {
+  importer_cargo_type_uuid String      @id @unique @db.Uuid
+  importer_uuid            String      @db.Uuid
+  cargo_type_uuid          String      @db.Uuid
+  cargo_types              cargo_types @relation(fields: [cargo_type_uuid], references: [cargo_type_uuid])
+  importers                importers   @relation(fields: [importer_uuid], references: [importer_uuid])
+
+  @@unique([importer_uuid, cargo_type_uuid], name: "importer_cargo_type_uk")
+}
+
+model importer_destination_airports {
+  importer_destination_airport_uuid String    @id @unique @db.Uuid
+  importer_uuid                     String    @db.Uuid
+  airport_uuid                      String    @db.Uuid
+  airports                          airports  @relation(fields: [airport_uuid], references: [airport_uuid])
+  importers                         importers @relation(fields: [importer_uuid], references: [importer_uuid])
+
+  @@unique([importer_uuid, airport_uuid], name: "importer_destination_airport_uk")
+}
+
+model importer_destination_ports {
+  importer_destination_port_uuid String    @id @unique @db.Uuid
+  importer_uuid                  String    @db.Uuid
+  port_uuid                      String    @db.Uuid
+  importers                      importers @relation(fields: [importer_uuid], references: [importer_uuid])
+  ports                          ports     @relation(fields: [port_uuid], references: [port_uuid])
+
+  @@unique([importer_uuid, port_uuid], name: "importer_destination_port_uk")
+}
+
+model importer_origin_airports {
+  importer_origin_airport_uuid String    @id @unique @db.Uuid
+  importer_uuid                String    @db.Uuid
+  airport_uuid                 String    @db.Uuid
+  airports                     airports  @relation(fields: [airport_uuid], references: [airport_uuid])
+  importers                    importers @relation(fields: [importer_uuid], references: [importer_uuid])
+
+  @@unique([importer_uuid, airport_uuid], name: "importer_origin_airport_uk")
+}
+
+model importer_origin_ports {
+  importer_origin_port_uuid String    @id @unique @db.Uuid
+  importer_uuid             String    @db.Uuid
+  port_uuid                 String    @db.Uuid
+  importers                 importers @relation(fields: [importer_uuid], references: [importer_uuid])
+  ports                     ports     @relation(fields: [port_uuid], references: [port_uuid])
+
+  @@unique([importer_uuid, port_uuid], name: "importer_origin_port_uk")
+}
+
+model importers {
+  importer_uuid                 String                          @id @unique @db.Uuid
+  company_uuid                  String                          @unique @db.Uuid
+  mass_measure_uuid             String?                         @db.Uuid
+  length_measure_uuid           String?                         @db.Uuid
+  companies                     companies                       @relation(fields: [company_uuid], references: [company_uuid])
+  length_measures               length_measures?                @relation(fields: [length_measure_uuid], references: [length_measure_uuid])
+  mass_measures                 mass_measures?                  @relation(fields: [mass_measure_uuid], references: [mass_measure_uuid])
+  importer_cargo_types          importer_cargo_types[]
+  importer_destination_airports importer_destination_airports[]
+  importer_destination_ports    importer_destination_ports[]
+  importer_origin_airports      importer_origin_airports[]
+  importer_origin_ports         importer_origin_ports[]
+}
+
+model insurances {
+  insurance_uuid String          @id @db.Uuid
+  name           String?         @db.VarChar(255)
+  minimum        Float?
+  percentage     Float?
+  company_uuid   String          @unique @db.Uuid
+  companies      companies       @relation(fields: [company_uuid], references: [company_uuid])
+  parcel_routes  parcel_routes[]
+}
+
+model integrations {
+  integration_uuid     String                 @id @db.Uuid
+  name                 String                 @unique @db.VarChar(255)
+  url                  String                 @db.VarChar(255)
+  logo                 String                 @db.VarChar(255)
+  company_integrations company_integrations[]
+}
+
+model land_freight_services {
+  land_freight_service_uuid       String                            @id @unique @db.Uuid
+  name                            String?                           @unique @db.VarChar(255)
+  forwarder_land_freight_services forwarder_land_freight_services[]
+  trucking_land_freight_services  trucking_land_freight_services[]
+}
+
+model land_service_areas {
+  land_service_area_uuid       String                         @id @unique @db.Uuid
+  name                         String?                        @unique @db.VarChar(255)
+  forwarder_land_service_areas forwarder_land_service_areas[]
+  trucking_land_service_areas  trucking_land_service_areas[]
+}
+
+model length_measures {
+  length_measure_uuid String          @id @unique @db.Uuid
+  name                String          @unique @db.VarChar(255)
+  exporters           exporters[]
+  importers           importers[]
+  parcel_routes       parcel_routes[]
+}
+
+model location_administrative_divisions {
+  location_administrative_division_uuid String                   @id @db.Uuid
+  administrative_division_uuid          String                   @db.Uuid
+  location_uuid                         String                   @db.Uuid
+  administrative_divisions              administrative_divisions @relation(fields: [administrative_division_uuid], references: [administrative_division_uuid])
+  locations                             locations                @relation(fields: [location_uuid], references: [location_uuid])
+}
+
+model location_reference_types {
+  location_reference_type_uuid      String                              @id @db.Uuid
+  name                              String                              @unique @db.VarChar(255)
+  airport_location                  airport_location[]
+  parcel_profit_location_references parcel_profit_location_references[]
+  parcel_route_location_references  parcel_route_location_references[]
+  port_location                     port_location[]
+}
+
+model locations {
+  location_uuid                     String                              @id @db.Uuid
+  address_type                      enum_address_type?
+  street_number                     String                              @db.VarChar(255)
+  complement                        String?                             @db.VarChar(255)
+  postal_code_uuid                  String                              @db.Uuid
+  raw_address                       Json?                               @db.Json
+  postal_codes                      postal_codes                        @relation(fields: [postal_code_uuid], references: [postal_code_uuid])
+  bank_accounts                     bank_accounts[]
+  companies                         companies[]
+  drop_off_locations                drop_off_locations[]
+  location_administrative_divisions location_administrative_divisions[]
+  parcel_members                    parcel_members[]
+  parcel_members_bkp                parcel_members_bkp[]
+  users                             users[]
+}
+
+model mass_measures {
+  mass_measure_uuid String      @id @unique @db.Uuid
+  name              String      @unique @db.VarChar(255)
+  exporters         exporters[]
+  importers         importers[]
+}
+
+model modals {
+  modal_uuid               String                     @id @db.Uuid
+  name                     String                     @db.VarChar(255)
+  icon                     String?                    @db.VarChar(20)
+  drop_off_location_modals drop_off_location_modals[]
+  parcel_route_modals      parcel_route_modals[]
+  profits                  profits[]
+}
+
+model not_found_parcel_quotes {
+  not_found_parcel_quote_uuid  String    @id @db.Uuid
+  quote                        String
+  requester_notification_email String    @db.VarChar(255)
+  created_at                   DateTime? @db.Timestamptz(6)
+
+  @@unique([quote, requester_notification_email], name: "quote_and_req_notification_email_uk")
+}
+
+model parcel_booking_comments {
+  parcel_booking_comment_uuid String          @id @db.Uuid
+  parcel_booking_uuid         String          @db.Uuid
+  comment_uuid                String          @db.Uuid
+  comments                    comments        @relation(fields: [comment_uuid], references: [comment_uuid])
+  parcel_bookings             parcel_bookings @relation(fields: [parcel_booking_uuid], references: [parcel_booking_uuid])
+}
+
+model parcel_bookings {
+  parcel_booking_uuid           String                             @id @db.Uuid
+  created_at                    DateTime                           @db.Timestamptz(6)
+  payment_intent_id             String?                            @db.VarChar(255)
+  confirmed                     Boolean?
+  p_parcel_id                   String?                            @map("3p_parcel_id") @db.VarChar(255)
+  quote                         Json?                              @db.Json
+  metadata                      Json?                              @db.Json
+  pickup_metadata               Json?                              @db.Json
+  estimated_date                DateTime?                          @db.Timestamptz(6)
+  agree_to_payment_terms        Boolean?
+  label_url                     String?                            @db.VarChar(255)
+  invoice_url                   String?                            @db.VarChar(255)
+  receipt_url                   String?                            @db.VarChar(255)
+  parcel_serial_number          Int                                @unique @default(autoincrement())
+  payment_method_uuid           String?                            @db.Uuid
+  parcel_rate_source_uuid       String?                            @db.Uuid
+  user_uuid                     String                             @db.Uuid
+  shipment_status_uuid          String?                            @db.Uuid
+  delivered_date                DateTime?                          @db.Timestamptz(6)
+  tracking_code_id              String?                            @unique
+  payable_status                enum_parcel_booking_payment_status @default(OPEN)
+  receivable_status             enum_parcel_booking_payment_status @default(OPEN)
+  total_amount                  Float?                             @default(0)
+  profit_amount                 Float?                             @default(0)
+  payment_method_charges        Float?                             @default(0)
+  bill_of_lading_url            String?                            @db.VarChar(255)
+  parcel_rate_sources           parcel_rate_sources?               @relation(fields: [parcel_rate_source_uuid], references: [parcel_rate_source_uuid])
+  payment_methods               payment_methods?                   @relation(fields: [payment_method_uuid], references: [payment_method_uuid])
+  shipment_statuses             shipment_statuses?                 @relation(fields: [shipment_status_uuid], references: [shipment_status_uuid])
+  tracking_code                 tracking_code?                     @relation(fields: [tracking_code_id], references: [tracking_code])
+  users                         users                              @relation(fields: [user_uuid], references: [user_uuid])
+  parcel_booking_comments       parcel_booking_comments[]
+  parcel_member_parcel_bookings parcel_member_parcel_bookings[]
+  parcel_members_bkp            parcel_members_bkp[]
+}
+
+model parcel_freight_services {
+  parcel_freight_service_uuid       String                              @id @unique @db.Uuid
+  name                              String?                             @unique @db.VarChar(255)
+  forwarder_parcel_freight_services forwarder_parcel_freight_services[]
+  trucking_parcel_freight_services  trucking_parcel_freight_services[]
+}
+
+model parcel_mass_measures {
+  parcel_mass_measure_uuid String          @id @db.Uuid
+  name                     String          @db.VarChar(255)
+  parcel_routes            parcel_routes[]
+}
+
+model parcel_member_parcel_bookings {
+  parcel_member_parcel_booking_uuid String          @id @db.Uuid
+  parcel_member_uuid                String          @db.Uuid
+  parcel_booking_uuid               String          @db.Uuid
+  parcel_bookings                   parcel_bookings @relation(fields: [parcel_booking_uuid], references: [parcel_booking_uuid])
+  parcel_members                    parcel_members  @relation(fields: [parcel_member_uuid], references: [parcel_member_uuid])
+
+  @@unique([parcel_member_uuid, parcel_booking_uuid], name: "parcel_member_and_parcel_booking_uk")
+}
+
+model parcel_members {
+  parcel_member_uuid            String                          @id @db.Uuid
+  type                          enum_parcel_member_type?
+  pre_filled                    enum_parcel_member_pre_filled?
+  is_residential_address        Boolean?
+  phone                         Json?                           @db.Json
+  full_name                     String?
+  tax_id                        String?
+  email                         String?
+  location_uuid                 String?                         @db.Uuid
+  subject_role_type_uuid        String                          @db.Uuid
+  user_uuid                     String?                         @db.Uuid
+  company_uuid                  String?                         @db.Uuid
+  company_name                  String?
+  first_name                    String?
+  last_name                     String?
+  companies                     companies?                      @relation(fields: [company_uuid], references: [company_uuid])
+  locations                     locations?                      @relation(fields: [location_uuid], references: [location_uuid])
+  subject_role_types            subject_role_types              @relation(fields: [subject_role_type_uuid], references: [subject_role_type_uuid])
+  users                         users?                          @relation(fields: [user_uuid], references: [user_uuid])
+  parcel_member_parcel_bookings parcel_member_parcel_bookings[]
+}
+
+model parcel_members_bkp {
+  parcel_member_uuid     String             @id @db.Uuid
+  location_uuid          String?            @db.Uuid
+  is_residential_address Boolean?
+  phone                  Json?              @db.Json
+  full_name              String?
+  tax_id                 String?
+  email                  String?
+  subject_role_type_uuid String             @db.Uuid
+  parcel_booking_uuid    String             @db.Uuid
+  user_uuid              String?            @db.Uuid
+  company_uuid           String?            @db.Uuid
+  companies              companies?         @relation(fields: [company_uuid], references: [company_uuid])
+  locations              locations?         @relation(fields: [location_uuid], references: [location_uuid])
+  parcel_bookings        parcel_bookings    @relation(fields: [parcel_booking_uuid], references: [parcel_booking_uuid])
+  subject_role_types     subject_role_types @relation(fields: [subject_role_type_uuid], references: [subject_role_type_uuid])
+  users                  users?             @relation(fields: [user_uuid], references: [user_uuid])
+}
+
+model parcel_profit_location_references {
+  parcel_profit_location_reference_uuid String                    @id @db.Uuid
+  country                               String?                   @db.VarChar(255)
+  state                                 String?                   @db.VarChar(255)
+  city                                  String?                   @db.VarChar(255)
+  postal_code                           String?                   @db.VarChar(255)
+  address                               String?                   @db.VarChar(255)
+  location_reference_type_uuid          String?                   @db.Uuid
+  parcel_profit_setup_uuid              String?                   @db.Uuid
+  location_reference_types              location_reference_types? @relation(fields: [location_reference_type_uuid], references: [location_reference_type_uuid])
+  parcel_profit_setups                  parcel_profit_setups?     @relation(fields: [parcel_profit_setup_uuid], references: [parcel_profit_setup_uuid])
+}
+
+model parcel_profit_setup_customer_types {
+  parcel_profit_setup_customer_type_uuid String                @id @db.Uuid
+  company_type_uuid                      String                @db.Uuid
+  parcel_profit_setup_uuid               String?               @db.Uuid
+  company_types                          company_types         @relation(fields: [company_type_uuid], references: [company_type_uuid])
+  parcel_profit_setups                   parcel_profit_setups? @relation(fields: [parcel_profit_setup_uuid], references: [parcel_profit_setup_uuid])
+}
+
+model parcel_profit_setup_customers {
+  parcel_profit_setup_customer_uuid String                @id @db.Uuid
+  company_uuid                      String                @db.Uuid
+  parcel_profit_setup_uuid          String?               @db.Uuid
+  companies                         companies             @relation(fields: [company_uuid], references: [company_uuid])
+  parcel_profit_setups              parcel_profit_setups? @relation(fields: [parcel_profit_setup_uuid], references: [parcel_profit_setup_uuid])
+}
+
+model parcel_profit_setups {
+  parcel_profit_setup_uuid                                      String                               @id @db.Uuid
+  profit                                                        Float?
+  minimum                                                       Float?
+  minimum_profit                                                Float?
+  expires_on                                                    DateTime?                            @db.Timestamptz(6)
+  public                                                        Boolean?
+  vendor_company_uuid                                           String?                              @db.Uuid
+  company_uuid                                                  String                               @db.Uuid
+  rate_type_uuid                                                String?                              @db.Uuid
+  companies_companiesToparcel_profit_setups_company_uuid        companies                            @relation("companiesToparcel_profit_setups_company_uuid", fields: [company_uuid], references: [company_uuid])
+  rate_types                                                    rate_types?                          @relation(fields: [rate_type_uuid], references: [rate_type_uuid])
+  companies_companiesToparcel_profit_setups_vendor_company_uuid companies?                           @relation("companiesToparcel_profit_setups_vendor_company_uuid", fields: [vendor_company_uuid], references: [company_uuid])
+  parcel_profit_location_references                             parcel_profit_location_references[]
+  parcel_profit_setup_customer_types                            parcel_profit_setup_customer_types[]
+  parcel_profit_setup_customers                                 parcel_profit_setup_customers[]
+
+  @@unique([profit, minimum, minimum_profit, expires_on, vendor_company_uuid, company_uuid, rate_type_uuid], name: "parcel_profit_setup_uk")
+}
+
+model parcel_rate_custom_fields {
+  parcel_rate_custom_field_uuid         String                                  @id @db.Uuid
+  field                                 String                                  @db.VarChar(255)
+  company_uuid                          String                                  @db.Uuid
+  parcel_route_uuid                     String?                                 @db.Uuid
+  companies                             companies                               @relation(fields: [company_uuid], references: [company_uuid])
+  parcel_routes                         parcel_routes?                          @relation(fields: [parcel_route_uuid], references: [parcel_route_uuid])
+  parcel_rate_parcel_rate_custom_fields parcel_rate_parcel_rate_custom_fields[]
+}
+
+model parcel_rate_parcel_rate_custom_fields {
+  parcel_rate_parcel_rate_custom_field_uuid String                    @id @db.Uuid
+  parcel_rate_uuid                          String                    @db.Uuid
+  parcel_rate_custom_field_uuid             String                    @db.Uuid
+  value                                     String?                   @db.VarChar(255)
+  parcel_rate_custom_fields                 parcel_rate_custom_fields @relation(fields: [parcel_rate_custom_field_uuid], references: [parcel_rate_custom_field_uuid])
+  parcel_rates                              parcel_rates              @relation(fields: [parcel_rate_uuid], references: [parcel_rate_uuid])
+
+  @@unique([parcel_rate_uuid, parcel_rate_custom_field_uuid], name: "parcel_rate_and_parcel_rate_custom_field_uk")
+}
+
+model parcel_rate_sources {
+  parcel_rate_source_uuid  String                     @id @db.Uuid
+  name                     String?                    @db.VarChar(255)
+  icon                     String?                    @db.VarChar(50)
+  feedbacks                feedbacks[]
+  parcel_bookings          parcel_bookings[]
+  parcel_route_first_miles parcel_route_first_miles[]
+  parcel_route_last_miles  parcel_route_last_miles[]
+  parcel_routes            parcel_routes[]
+}
+
+model parcel_rates {
+  parcel_rate_uuid                      String                                  @id @db.Uuid
+  minimum                               Float?
+  fee                                   Float?
+  profit                                Float?
+  minimum_profit                        Float?
+  minimum_weight                        Float?
+  maximum_weight                        Float?
+  parcel_route_uuid                     String                                  @db.Uuid
+  rate_type_uuid                        String                                  @db.Uuid
+  parcel_rates_auto_weight_break_uuid   String?                                 @unique @db.Uuid
+  profit_type                           String?
+  transit_time_from                     Int?
+  transit_time_to                       Int?
+  parcel_rates_auto_weight_break        parcel_rates_auto_weight_break?         @relation(fields: [parcel_rates_auto_weight_break_uuid], references: [parcel_rates_auto_weight_break_uuid])
+  parcel_routes                         parcel_routes                           @relation(fields: [parcel_route_uuid], references: [parcel_route_uuid])
+  rate_types                            rate_types                              @relation(fields: [rate_type_uuid], references: [rate_type_uuid])
+  parcel_rate_parcel_rate_custom_fields parcel_rate_parcel_rate_custom_fields[]
+  parcel_route_rules                    parcel_route_rules?
+}
+
+model parcel_rates_auto_weight_break {
+  parcel_rates_auto_weight_break_uuid String              @id @unique @db.Uuid
+  weight                              Float
+  weight_measure                      enum_weight_measure
+  value                               Float
+  coin                                String
+  max_weight                          Float
+  max_weight_measure                  enum_weight_measure
+  parcel_rates                        parcel_rates?
+}
+
+model parcel_route_customer_types {
+  parcel_route_customer_type_uuid String        @id @db.Uuid
+  parcel_route_uuid               String        @db.Uuid
+  company_type_uuid               String        @db.Uuid
+  company_types                   company_types @relation(fields: [company_type_uuid], references: [company_type_uuid])
+  parcel_routes                   parcel_routes @relation(fields: [parcel_route_uuid], references: [parcel_route_uuid])
+
+  @@unique([company_type_uuid, parcel_route_uuid], name: "parcel_route_customer_type_uk")
+}
+
+model parcel_route_customers {
+  parcel_route_customer_uuid String        @id @db.Uuid
+  parcel_route_uuid          String        @db.Uuid
+  company_uuid               String        @db.Uuid
+  companies                  companies     @relation(fields: [company_uuid], references: [company_uuid])
+  parcel_routes              parcel_routes @relation(fields: [parcel_route_uuid], references: [parcel_route_uuid])
+
+  @@unique([parcel_route_uuid, company_uuid], name: "parcel_route_and_customer_uk")
+}
+
+model parcel_route_location_references {
+  parcel_route_location_reference_uuid String                   @id @db.Uuid
+  country                              String?                  @db.VarChar(255)
+  state                                String?                  @db.VarChar(255)
+  city                                 String?                  @db.VarChar(255)
+  postal_code                          String?                  @db.VarChar(255)
+  address                              String?                  @db.VarChar(255)
+  parcel_route_uuid                    String                   @db.Uuid
+  location_reference_type_uuid         String                   @db.Uuid
+  location_reference_types             location_reference_types @relation(fields: [location_reference_type_uuid], references: [location_reference_type_uuid])
+  parcel_routes                        parcel_routes            @relation(fields: [parcel_route_uuid], references: [parcel_route_uuid])
+}
+
+model parcel_route_modals {
+  parcel_route_modal_uuid String        @id @db.Uuid
+  parcel_route_uuid       String        @db.Uuid
+  modal_uuid              String        @db.Uuid
+  modals                  modals        @relation(fields: [modal_uuid], references: [modal_uuid])
+  parcel_routes           parcel_routes @relation(fields: [parcel_route_uuid], references: [parcel_route_uuid])
+
+  @@unique([modal_uuid, parcel_route_uuid], name: "parcel_route_modal_uk")
+}
+
+model parcel_route_week_days {
+  parcel_route_week_day_uuid String        @id @db.Uuid
+  parcel_route_uuid          String        @db.Uuid
+  week_day_uuid              String        @db.Uuid
+  parcel_routes              parcel_routes @relation(fields: [parcel_route_uuid], references: [parcel_route_uuid])
+  week_days                  week_days     @relation(fields: [week_day_uuid], references: [week_day_uuid])
+
+  @@unique([week_day_uuid, parcel_route_uuid], name: "parcel_route_week_day_uk")
+}
+
+model value_service_modal {
+  value_service_modal_uuid String         @id @db.Uuid
+  modal                    enum_modal
+  value_services_uuid      String         @db.Uuid
+  value_services           value_services @relation(fields: [value_services_uuid], references: [value_services_uuid])
+}
+
+model value_services {
+  value_services_uuid                String                               @id @db.Uuid
+  effective_on                       DateTime?                            @db.Timestamptz(6)
+  expires_on                         DateTime?                            @db.Timestamptz(6)
+  carrier_uuid                       String?                              @db.Uuid
+  currency                           enum_coin?
+  weight_measure                     enum_weight_measure?
+  restriction                        String?
+  notes                              String?
+  is_published                       Boolean                              @default(false)
+  carrier                            companies?                           @relation(fields: [carrier_uuid], references: [company_uuid])
+  service                            service[]
+  modal                              value_service_modal[]
+  value_services_companies           value_services_companies[]
+  value_services_company_types       value_services_company_types[]
+  value_services_location_references value_services_location_references[]
+}
+
+model service {
+  service_uuid        String              @id @db.Uuid
+  description         String?
+  payable_to_uuid     String?             @db.Uuid
+  cost_rate           Float?
+  cost_minimum        Float?
+  applicable_to       enum_applicable_to?
+  profit              Float?
+  minimum_profit      Float?
+  rule                enum_role?
+  custom_rule_uuid    String?             @db.Uuid
+  value_services_uuid String?             @db.Uuid
+  minimum_per         enum_minimum_per?
+  custom_rule         custom_rule?        @relation(fields: [custom_rule_uuid], references: [custom_rule_uuid])
+  payable_to          companies?          @relation(fields: [payable_to_uuid], references: [company_uuid])
+  value_services      value_services?     @relation(fields: [value_services_uuid], references: [value_services_uuid])
+}
+
+model custom_rule {
+  custom_rule_uuid                String                            @id @db.Uuid
+  custom_rule_custom_rule_address custom_rule_custom_rule_address[]
+  custom_rule_custom_rule_cif     custom_rule_custom_rule_cif[]
+  custom_rule_custom_rule_parcel  custom_rule_custom_rule_parcel[]
+  custom_rule_custom_rule_rate    custom_rule_custom_rule_rate[]
+  custom_rule_custom_rule_user    custom_rule_custom_rule_user[]
+  service                         service[]
+}
+
+model custom_rule_custom_rule_cif {
+  custom_rule_uuid     String          @db.Uuid
+  custom_rule_cif_uuid String          @db.Uuid
+  custom_rule_cif      custom_rule_cif @relation(fields: [custom_rule_cif_uuid], references: [custom_rule_cif_uuid])
+  custom_rule          custom_rule     @relation(fields: [custom_rule_uuid], references: [custom_rule_uuid])
+
+  @@unique([custom_rule_uuid, custom_rule_cif_uuid], name: "custom_rule_custom_rule_cif_uk")
+}
+
+model custom_rule_cif {
+  custom_rule_cif_uuid        String                        @id @db.Uuid
+  preposition                 enum_preposition
+  condition                   enum_condition_cif
+  value                       Float
+  coin                        enum_coin
+  custom_rule_custom_rule_cif custom_rule_custom_rule_cif[]
+}
+
+model custom_rule_custom_rule_address {
+  custom_rule_uuid         String              @db.Uuid
+  custom_rule_address_uuid String              @db.Uuid
+  custom_rule_address      custom_rule_address @relation(fields: [custom_rule_address_uuid], references: [custom_rule_address_uuid])
+  custom_rule              custom_rule         @relation(fields: [custom_rule_uuid], references: [custom_rule_uuid])
+
+  @@unique([custom_rule_uuid, custom_rule_address_uuid], name: "custom_rule_custom_rule_address_uk")
+}
+
+model custom_rule_address {
+  custom_rule_address_uuid        String                            @id @db.Uuid
+  preposition                     enum_preposition
+  condition                       enum_condition_address
+  value                           enum_address_type
+  custom_rule_custom_rule_address custom_rule_custom_rule_address[]
+}
+
+model custom_rule_custom_rule_user {
+  custom_rule_uuid      String           @db.Uuid
+  custom_rule_user_uuid String           @db.Uuid
+  custom_rule_user      custom_rule_user @relation(fields: [custom_rule_user_uuid], references: [custom_rule_user_uuid])
+  custom_rule           custom_rule      @relation(fields: [custom_rule_uuid], references: [custom_rule_uuid])
+
+  @@unique([custom_rule_uuid, custom_rule_user_uuid], name: "custom_rule_custom_rule_user_uk")
+}
+
+model custom_rule_user {
+  custom_rule_user_uuid        String                         @id @db.Uuid
+  preposition                  enum_preposition
+  condition                    enum_condition_user
+  value                        enum_user_type
+  custom_rule_custom_rule_user custom_rule_custom_rule_user[]
+}
+
+model custom_rule_custom_rule_parcel {
+  custom_rule_uuid        String             @db.Uuid
+  custom_rule_parcel_uuid String             @db.Uuid
+  custom_rule_parcel      custom_rule_parcel @relation(fields: [custom_rule_parcel_uuid], references: [custom_rule_parcel_uuid])
+  custom_rule             custom_rule        @relation(fields: [custom_rule_uuid], references: [custom_rule_uuid])
+
+  @@unique([custom_rule_uuid, custom_rule_parcel_uuid], name: "custom_rule_custom_rule_parcel_uk")
+}
+
+model custom_rule_parcel {
+  custom_rule_parcel_uuid        String                           @id @db.Uuid
+  preposition                    enum_preposition
+  condition                      enum_condition_parcel
+  value                          enum_parcel_type
+  custom_rule_custom_rule_parcel custom_rule_custom_rule_parcel[]
+}
+
+model custom_rule_custom_rule_rate {
+  custom_rule_uuid      String           @db.Uuid
+  custom_rule_rate_uuid String           @db.Uuid
+  custom_rule_rate      custom_rule_rate @relation(fields: [custom_rule_rate_uuid], references: [custom_rule_rate_uuid])
+  custom_rule           custom_rule      @relation(fields: [custom_rule_uuid], references: [custom_rule_uuid])
+
+  @@unique([custom_rule_uuid, custom_rule_rate_uuid], name: "custom_rule_custom_rule_rate_uk")
+}
+
+model custom_rule_rate {
+  custom_rule_rate_uuid        String                         @id @db.Uuid
+  preposition                  enum_preposition
+  condition                    enum_condition_rate
+  value                        enum_rate_type
+  custom_rule_custom_rule_rate custom_rule_custom_rule_rate[]
+}
+
+model value_services_companies {
+  value_services_uuid String         @db.Uuid
+  company_uuid        String         @db.Uuid
+  companies           companies      @relation(fields: [company_uuid], references: [company_uuid])
+  value_services      value_services @relation(fields: [value_services_uuid], references: [value_services_uuid])
+
+  @@unique([value_services_uuid, company_uuid], name: "value_services_companies_uk")
+}
+
+model value_services_company_types {
+  value_services_uuid String         @db.Uuid
+  company_type_uuid   String         @db.Uuid
+  company_types       company_types  @relation(fields: [company_type_uuid], references: [company_type_uuid])
+  value_services      value_services @relation(fields: [value_services_uuid], references: [value_services_uuid])
+
+  @@unique([value_services_uuid, company_type_uuid], name: "value_services_company_types_uk")
+}
+
+model value_services_location_references {
+  value_services_uuid      String              @db.Uuid
+  location_references_uuid String              @db.Uuid
+  location_references      location_references @relation(fields: [location_references_uuid], references: [location_references_uuid])
+  value_services           value_services      @relation(fields: [value_services_uuid], references: [value_services_uuid])
+
+  @@unique([value_services_uuid, location_references_uuid], name: "value_services_location_references_uk")
+}
+
+model location_references {
+  location_references_uuid           String                               @id @db.Uuid
+  country                            String?                              @db.VarChar(255)
+  state                              String?                              @db.VarChar(255)
+  city                               String?                              @db.VarChar(255)
+  postal_code                        String?                              @db.VarChar(255)
+  address                            String?                              @db.VarChar(255)
+  type                               enum_location_type?
+  coverage                           enum_coverage?
+  value_services_location_references value_services_location_references[]
+}
+
+model parcel_routes {
+  parcel_route_uuid                                            String                             @id @db.Uuid
+  effective_on                                                 DateTime?                          @db.Timestamptz(6)
+  expires_on                                                   DateTime?                          @db.Timestamptz(6)
+  transit_time_from                                            Int?
+  transit_time_to                                              Int?
+  notes                                                        String?                            @db.VarChar(250)
+  restrictions                                                 String?                            @db.VarChar(250)
+  published                                                    Boolean?
+  public                                                       Boolean?
+  company_uuid                                                 String                             @db.Uuid
+  vendor_company_uuid                                          String?                            @db.Uuid
+  parcel_mass_measure_uuid                                     String?                            @db.Uuid
+  currency_uuid                                                String?                            @db.Uuid
+  origin_coverage_uuid                                         String?                            @db.Uuid
+  destination_coverage_uuid                                    String?                            @db.Uuid
+  fuel_surcharge_fee_uuid                                      String?                            @db.Uuid
+  screening_fee_uuid                                           String?                            @db.Uuid
+  insurance_uuid                                               String?                            @db.Uuid
+  carrier_company_uuid                                         String?                            @db.Uuid
+  carrier_unregistered_company_uuid                            String?                            @db.Uuid
+  company_integration_uuid                                     String?                            @db.Uuid
+  dimensional_factor_uuid                                      String?                            @db.Uuid
+  length_measure_uuid                                          String?                            @db.Uuid
+  currency_rate                                                Float?
+  currency_rate_meta                                           Json?                              @db.Json
+  created_at                                                   DateTime?                          @default(now()) @db.Timestamptz(6)
+  issued_label_source_uuid                                     String?                            @db.Uuid
+  duties_taxes_ddp                                             Boolean?                           @default(false)
+  duties_taxes_exemption                                       Float?                             @default(0)
+  duties_taxes_percentage                                      Float?                             @default(0)
+  duties_taxes_type                                            String?
+  insurance_fee_minimum                                        Float?                             @default(0)
+  insurance_fee_percentage                                     Float?                             @default(0)
+  insurance_fee_type                                           String?
+  signature_description                                        String?
+  signature_service_fee                                        Float?                             @default(0)
+  companies_companiesToparcel_routes_carrier_company_uuid      companies?                         @relation("companiesToparcel_routes_carrier_company_uuid", fields: [carrier_company_uuid], references: [company_uuid])
+  unregistered_companies                                       unregistered_companies?            @relation(fields: [carrier_unregistered_company_uuid], references: [unregistered_company_uuid])
+  company_integrations                                         company_integrations?              @relation(fields: [company_integration_uuid], references: [company_integration_uuid])
+  companies_companiesToparcel_routes_company_uuid              companies                          @relation("companiesToparcel_routes_company_uuid", fields: [company_uuid], references: [company_uuid])
+  currencies                                                   currencies?                        @relation(fields: [currency_uuid], references: [currency_uuid])
+  coverages_coveragesToparcel_routes_destination_coverage_uuid coverages?                         @relation("coveragesToparcel_routes_destination_coverage_uuid", fields: [destination_coverage_uuid], references: [coverage_uuid])
+  fuel_surcharge_fees                                          fuel_surcharge_fees?               @relation(fields: [fuel_surcharge_fee_uuid], references: [fuel_surcharge_fee_uuid])
+  insurances                                                   insurances?                        @relation(fields: [insurance_uuid], references: [insurance_uuid])
+  issued_label_source                                          parcel_rate_sources?               @relation(fields: [issued_label_source_uuid], references: [parcel_rate_source_uuid])
+  length_measures                                              length_measures?                   @relation(fields: [length_measure_uuid], references: [length_measure_uuid])
+  coverages_coveragesToparcel_routes_origin_coverage_uuid      coverages?                         @relation("coveragesToparcel_routes_origin_coverage_uuid", fields: [origin_coverage_uuid], references: [coverage_uuid])
+  parcel_mass_measures                                         parcel_mass_measures?              @relation(fields: [parcel_mass_measure_uuid], references: [parcel_mass_measure_uuid])
+  screening_fees                                               screening_fees?                    @relation(fields: [screening_fee_uuid], references: [screening_fee_uuid])
+  companies_companiesToparcel_routes_vendor_company_uuid       companies?                         @relation("companiesToparcel_routes_vendor_company_uuid", fields: [vendor_company_uuid], references: [company_uuid])
+  airport_location                                             airport_location[]
+  parcel_rate_custom_fields                                    parcel_rate_custom_fields[]
+  parcel_rates                                                 parcel_rates[]
+  parcel_route_customer_types                                  parcel_route_customer_types[]
+  parcel_route_customers                                       parcel_route_customers[]
+  parcel_route_drop_off_locations                              parcel_route_drop_off_locations[]
+  parcel_route_first_miles                                     parcel_route_first_miles[]
+  parcel_route_histories                                       parcel_route_histories[]
+  parcel_route_last_miles                                      parcel_route_last_miles[]
+  parcel_route_location_references                             parcel_route_location_references[]
+  parcel_route_modals                                          parcel_route_modals[]
+  parcel_route_rules                                           parcel_route_rules[]
+  parcel_route_week_days                                       parcel_route_week_days[]
+  port_location                                                port_location[]
+}
+
+model parcel_route_rules {
+  parcel_route_rule_uuid String              @id @unique @db.Uuid
+  type                   enum_rules_type
+  pieces                 Int
+  length                 Float
+  width                  Float
+  height                 Float
+  length_measure         enum_length_measure
+  weight                 Float
+  weight_measure         enum_weight_measure
+  value                  Float
+  coin                   String
+  parcel_rate_uuid       String              @unique @db.Uuid
+  parcel_routes_uuid     String              @db.Uuid
+  parcel_rates           parcel_rates        @relation(fields: [parcel_rate_uuid], references: [parcel_rate_uuid])
+  parcel_routes          parcel_routes       @relation(fields: [parcel_routes_uuid], references: [parcel_route_uuid])
+}
+
+model parcel_service_areas {
+  parcel_service_area_uuid      String                          @id @unique @db.Uuid
+  name                          String?                         @unique @db.VarChar(255)
+  forwarder_parcel_service_area forwarder_parcel_service_area[]
+  trucking_parcel_service_areas trucking_parcel_service_areas[]
+}
+
+model payment_method_types {
+  payment_method_type_uuid String            @id @db.Uuid
+  name                     String            @db.VarChar(255)
+  payment_methods          payment_methods[]
+}
+
+model payment_methods {
+  payment_method_uuid      String                @id @db.Uuid
+  name                     String?               @db.VarChar(255)
+  card_network             String?               @db.VarChar(255)
+  last_4_digits            String?               @db.VarChar(255)
+  c3p_payment_method_id    String                @db.VarChar(255)
+  payment_method_type_uuid String?               @db.Uuid
+  user_uuid                String                @db.Uuid
+  payment_method_types     payment_method_types? @relation(fields: [payment_method_type_uuid], references: [payment_method_type_uuid])
+  users                    users                 @relation(fields: [user_uuid], references: [user_uuid])
+  parcel_bookings          parcel_bookings[]
+
+  @@unique([c3p_payment_method_id, user_uuid], name: "c3p_payment_method_id_and_user_uuid_uk")
+}
+
+model port_location {
+  port_uuid                    String                   @db.Uuid
+  parcel_route_uuid            String                   @db.Uuid
+  location_reference_type_uuid String                   @db.Uuid
+  location_reference_type      location_reference_types @relation(fields: [location_reference_type_uuid], references: [location_reference_type_uuid])
+  parcel_route                 parcel_routes            @relation(fields: [parcel_route_uuid], references: [parcel_route_uuid])
+  port                         ports                    @relation(fields: [port_uuid], references: [port_uuid])
+
+  @@unique([port_uuid, parcel_route_uuid, location_reference_type_uuid], name: "port_location_uk")
+}
+
+model airport_location {
+  airport_uuid                 String                   @db.Uuid
+  parcel_route_uuid            String                   @db.Uuid
+  location_reference_type_uuid String                   @db.Uuid
+  airport                      airports                 @relation(fields: [airport_uuid], references: [airport_uuid])
+  location_reference_type      location_reference_types @relation(fields: [location_reference_type_uuid], references: [location_reference_type_uuid])
+  parcel_route                 parcel_routes            @relation(fields: [parcel_route_uuid], references: [parcel_route_uuid])
+
+  @@unique([airport_uuid, parcel_route_uuid, location_reference_type_uuid], name: "airport_location_uk")
+}
+
+model permissions {
+  permission_uuid           String                      @id @db.Uuid
+  name                      String                      @db.VarChar(255)
+  method                    String                      @db.VarChar(255)
+  access_policy_permissions access_policy_permissions[]
+
+  @@unique([name, method], name: "permissions_uk")
+}
+
+model ports {
+  port_uuid                       String                            @id @unique @db.Uuid
+  code                            String?                           @unique @db.VarChar(255)
+  name                            String?                           @db.VarChar(255)
+  location                        String?                           @db.VarChar(255)
+  latitude                        String?                           @db.VarChar(255)
+  longitude                       String?                           @db.VarChar(255)
+  country_uuid                    String?                           @db.Uuid
+  countries                       countries?                        @relation(fields: [country_uuid], references: [country_uuid])
+  exporter_destination_ports      exporter_destination_ports[]
+  exporter_origin_ports           exporter_origin_ports[]
+  forwarder_origin_ports          forwarder_origin_ports[]
+  general_sale_agent_origin_ports general_sale_agent_origin_ports[]
+  importer_destination_ports      importer_destination_ports[]
+  importer_origin_ports           importer_origin_ports[]
+  port_location                   port_location[]
+  shipping_line_origin_ports      shipping_line_origin_ports[]
+  third_party_ports               third_party_ports[]
+}
+
+model postal_codes {
+  postal_code_uuid String      @id @db.Uuid
+  value            String      @unique @db.VarChar(255)
+  locations        locations[]
+}
+
+model profits {
+  profit_uuid   String     @id @db.Uuid
+  fixed         Float?
+  percentage    Int?
+  currency_uuid String     @db.Uuid
+  modal_uuid    String     @db.Uuid
+  currencies    currencies @relation(fields: [currency_uuid], references: [currency_uuid])
+  modals        modals     @relation(fields: [modal_uuid], references: [modal_uuid])
+}
+
+model rate_types {
+  rate_type_uuid       String                 @id @db.Uuid
+  name                 String                 @db.VarChar(255)
+  company_uuid         String?                @db.Uuid
+  companies            companies?             @relation(fields: [company_uuid], references: [company_uuid])
+  parcel_profit_setups parcel_profit_setups[]
+  parcel_rates         parcel_rates[]
+
+  @@unique([name, company_uuid], name: "rate_type_uk")
+}
+
+model relationship_invitations {
+  relationship_invitation                                             String     @id @db.Uuid
+  agent_email                                                         String     @db.VarChar(255)
+  customer_company_uuid                                               String?    @db.Uuid
+  vendor_company_uuid                                                 String?    @db.Uuid
+  companies_companiesTorelationship_invitations_customer_company_uuid companies? @relation("companiesTorelationship_invitations_customer_company_uuid", fields: [customer_company_uuid], references: [company_uuid])
+  companies_companiesTorelationship_invitations_vendor_company_uuid   companies? @relation("companiesTorelationship_invitations_vendor_company_uuid", fields: [vendor_company_uuid], references: [company_uuid])
+}
+
+model resources {
+  resource_uuid             String                      @id @db.Uuid
+  name                      String                      @unique @db.VarChar(255)
+  display_name              String                      @unique @db.VarChar(255)
+  access_policy_permissions access_policy_permissions[]
+}
+
+model screening_fees {
+  screening_fee_uuid String          @id @db.Uuid
+  name               String?         @db.VarChar(255)
+  minimum            Float?
+  value              Float?
+  company_uuid       String          @unique @db.Uuid
+  companies          companies       @relation(fields: [company_uuid], references: [company_uuid])
+  parcel_routes      parcel_routes[]
+}
+
+model sea_freight_services {
+  sea_freight_service_uuid           String                               @id @unique @db.Uuid
+  name                               String?                              @unique @db.VarChar(255)
+  forwarder_sea_freight_services     forwarder_sea_freight_services[]
+  shipping_line_sea_freight_services shipping_line_sea_freight_services[]
+}
+
+model shipment_statuses {
+  shipment_status_uuid String            @id @db.Uuid
+  name                 String            @db.VarChar(255)
+  parcel_bookings      parcel_bookings[]
+}
+
+model shipping_line_origin_ports {
+  shipping_line_origin_port_uuid String         @id @unique @db.Uuid
+  shipping_line_uuid             String         @db.Uuid
+  port_uuid                      String         @db.Uuid
+  ports                          ports          @relation(fields: [port_uuid], references: [port_uuid])
+  shipping_lines                 shipping_lines @relation(fields: [shipping_line_uuid], references: [shipping_line_uuid])
+
+  @@unique([shipping_line_uuid, port_uuid], name: "shipping_line_origin_port_uk")
+}
+
+model shipping_line_sea_freight_services {
+  shipping_line_sea_freight_service_uuid String               @id @unique @db.Uuid
+  shipping_line_uuid                     String               @db.Uuid
+  sea_freight_service_uuid               String               @db.Uuid
+  sea_freight_services                   sea_freight_services @relation(fields: [sea_freight_service_uuid], references: [sea_freight_service_uuid])
+  shipping_lines                         shipping_lines       @relation(fields: [shipping_line_uuid], references: [shipping_line_uuid])
+
+  @@unique([shipping_line_uuid, sea_freight_service_uuid], name: "shipping_line_sea_freight_service_uk")
+}
+
+model shipping_lines {
+  shipping_line_uuid                 String                               @id @unique @db.Uuid
+  license_number                     String?                              @db.VarChar(255)
+  carrier_code                       String?                              @db.VarChar(255)
+  company_uuid                       String                               @unique @db.Uuid
+  companies                          companies                            @relation(fields: [company_uuid], references: [company_uuid])
+  shipping_line_origin_ports         shipping_line_origin_ports[]
+  shipping_line_sea_freight_services shipping_line_sea_freight_services[]
+}
+
+model subject_role_types {
+  subject_role_type_uuid String               @id @db.Uuid
+  name                   String?              @db.VarChar(255)
+  parcel_members         parcel_members[]
+  parcel_members_bkp     parcel_members_bkp[]
+}
+
+model third_parties {
+  third_party_uuid                 String                             @id @unique @db.Uuid
+  company_uuid                     String                             @unique @db.Uuid
+  companies                        companies                          @relation(fields: [company_uuid], references: [company_uuid])
+  third_party_airports             third_party_airports[]
+  third_party_ports                third_party_ports[]
+  third_party_third_party_services third_party_third_party_services[]
+}
+
+model third_party_airports {
+  third_party_airport_uuid String        @id @unique @db.Uuid
+  third_party_uuid         String        @db.Uuid
+  airport_uuid             String        @db.Uuid
+  airports                 airports      @relation(fields: [airport_uuid], references: [airport_uuid])
+  third_parties            third_parties @relation(fields: [third_party_uuid], references: [third_party_uuid])
+
+  @@unique([third_party_uuid, airport_uuid], name: "third_party_airport_uk")
+}
+
+model third_party_ports {
+  third_party_port_uuid String        @id @unique @db.Uuid
+  third_party_uuid      String        @db.Uuid
+  port_uuid             String        @db.Uuid
+  ports                 ports         @relation(fields: [port_uuid], references: [port_uuid])
+  third_parties         third_parties @relation(fields: [third_party_uuid], references: [third_party_uuid])
+
+  @@unique([third_party_uuid, port_uuid], name: "third_party_port_uk")
+}
+
+model third_party_services {
+  third_party_service_uuid         String                             @id @unique @db.Uuid
+  name                             String?                            @unique @db.VarChar(255)
+  third_party_third_party_services third_party_third_party_services[]
+}
+
+model third_party_third_party_services {
+  third_party_third_party_service_uuid String               @id @unique @db.Uuid
+  third_party_uuid                     String               @db.Uuid
+  third_party_service_uuid             String               @db.Uuid
+  third_party_services                 third_party_services @relation(fields: [third_party_service_uuid], references: [third_party_service_uuid])
+  third_parties                        third_parties        @relation(fields: [third_party_uuid], references: [third_party_uuid])
+
+  @@unique([third_party_uuid, third_party_service_uuid], name: "third_party_third_party_service_uk")
+}
+
+model times {
+  time_uuid           String              @id @db.Uuid
+  time                DateTime?           @db.Timestamptz(6)
+  week_day_uuid       String              @db.Uuid
+  air_route_week_days air_route_week_days @relation(fields: [week_day_uuid], references: [week_day_uuid])
+}
+
+model trucking_cargo_types {
+  trucking_cargo_type_uuid String      @id @unique @db.Uuid
+  trucking_uuid            String      @db.Uuid
+  cargo_type_uuid          String      @db.Uuid
+  cargo_types              cargo_types @relation(fields: [cargo_type_uuid], references: [cargo_type_uuid])
+  truckings                truckings   @relation(fields: [trucking_uuid], references: [trucking_uuid])
+
+  @@unique([trucking_uuid, cargo_type_uuid], name: "trucking_cargo_type_uk")
+}
+
+model trucking_land_freight_services {
+  trucking_land_freight_service_uuid String                @id @unique @db.Uuid
+  trucking_uuid                      String                @db.Uuid
+  land_freight_service_uuid          String                @db.Uuid
+  land_freight_services              land_freight_services @relation(fields: [land_freight_service_uuid], references: [land_freight_service_uuid])
+  truckings                          truckings             @relation(fields: [trucking_uuid], references: [trucking_uuid])
+
+  @@unique([trucking_uuid, land_freight_service_uuid], name: "trucking_land_freight_service_uk")
+}
+
+model trucking_land_service_areas {
+  trucking_land_service_area_uuid String             @id @unique @db.Uuid
+  trucking_uuid                   String             @db.Uuid
+  land_service_area_uuid          String             @db.Uuid
+  land_service_areas              land_service_areas @relation(fields: [land_service_area_uuid], references: [land_service_area_uuid])
+  truckings                       truckings          @relation(fields: [trucking_uuid], references: [trucking_uuid])
+
+  @@unique([trucking_uuid, land_service_area_uuid], name: "trucking_land_service_area_uk")
+}
+
+model trucking_parcel_freight_services {
+  trucking_parcel_freight_service_uuid String                  @id @unique @db.Uuid
+  trucking_uuid                        String                  @db.Uuid
+  parcel_freight_service_uuid          String                  @db.Uuid
+  parcel_freight_services              parcel_freight_services @relation(fields: [parcel_freight_service_uuid], references: [parcel_freight_service_uuid])
+  truckings                            truckings               @relation(fields: [trucking_uuid], references: [trucking_uuid])
+
+  @@unique([trucking_uuid, parcel_freight_service_uuid], name: "trucking_parcel_freight_service_uk")
+}
+
+model trucking_parcel_service_areas {
+  trucking_parcel_service_area_uuid String               @id @unique @db.Uuid
+  trucking_uuid                     String               @db.Uuid
+  parcel_service_area_uuid          String               @db.Uuid
+  parcel_service_areas              parcel_service_areas @relation(fields: [parcel_service_area_uuid], references: [parcel_service_area_uuid])
+  truckings                         truckings            @relation(fields: [trucking_uuid], references: [trucking_uuid])
+
+  @@unique([trucking_uuid, parcel_service_area_uuid], name: "trucking_parcel_service_area_uk")
+}
+
+model trucking_warehouse_services {
+  trucking_warehouse_service_uuid String             @id @unique @db.Uuid
+  trucking_uuid                   String             @db.Uuid
+  warehouse_service_uuid          String             @db.Uuid
+  truckings                       truckings          @relation(fields: [trucking_uuid], references: [trucking_uuid])
+  warehouse_services              warehouse_services @relation(fields: [warehouse_service_uuid], references: [warehouse_service_uuid])
+
+  @@unique([trucking_uuid, warehouse_service_uuid], name: "trucking_warehouse_service_uk")
+}
+
+model truckings {
+  trucking_uuid                    String                             @id @unique @db.Uuid
+  warehouse_delivery_address       String?                            @db.VarChar(255)
+  warehouse_license_number         String?                            @db.VarChar(255)
+  trucking_license_number          String?                            @db.VarChar(255)
+  company_uuid                     String                             @unique @db.Uuid
+  companies                        companies                          @relation(fields: [company_uuid], references: [company_uuid])
+  trucking_cargo_types             trucking_cargo_types[]
+  trucking_land_freight_services   trucking_land_freight_services[]
+  trucking_land_service_areas      trucking_land_service_areas[]
+  trucking_parcel_freight_services trucking_parcel_freight_services[]
+  trucking_parcel_service_areas    trucking_parcel_service_areas[]
+  trucking_warehouse_services      trucking_warehouse_services[]
+}
+
+model unregistered_companies {
+  unregistered_company_uuid String          @id @db.Uuid
+  logo                      String?         @db.VarChar(255)
+  fantasy_name              String          @unique @db.VarChar(255)
+  air_routes                air_routes[]
+  parcel_routes             parcel_routes[]
+}
+
+model user_bank_accounts {
+  user_bank_account_uuid String        @id @db.Uuid
+  user_uuid              String        @db.Uuid
+  bank_account_uuid      String        @db.Uuid
+  bank_accounts          bank_accounts @relation(fields: [bank_account_uuid], references: [bank_account_uuid])
+  users                  users         @relation(fields: [user_uuid], references: [user_uuid])
+}
+
+model user_custom_hts_descriptions {
+  user_custom_hts_description_uuid String    @id @db.Uuid
+  description                      String
+  hts_code_uuid                    String    @db.Uuid
+  user_uuid                        String    @db.Uuid
+  hts_codes                        hts_codes @relation(fields: [hts_code_uuid], references: [hts_code_uuid])
+  users                            users     @relation(fields: [user_uuid], references: [user_uuid])
+}
+
+model users {
+  user_uuid                    String                         @id @unique @db.Uuid
+  first_name                   String?                        @db.VarChar(255)
+  last_name                    String?                        @db.VarChar(255)
+  email                        String?                        @unique @db.VarChar(255)
+  password                     String?                        @db.VarChar(255)
+  confirm_email_token          String?                        @db.VarChar(255)
+  confirm_email_token_expires  DateTime?                      @db.Timestamptz(6)
+  photo                        String?                        @db.VarChar(255)
+  phone                        Json?
+  stripe_customer_id           String?                        @db.VarChar(255)
+  account_activate             Boolean?                       @default(false)
+  created_at                   DateTime?                      @db.Timestamptz(6)
+  home_address_uuid            String?                        @db.Uuid
+  type                         enum_users_type                @default(NORMAL)
+  tax_id                       String?                        @db.VarChar(255)
+  is_block                     Boolean                        @default(false)
+  locations                    locations?                     @relation(fields: [home_address_uuid], references: [location_uuid])
+  api_tokens                   api_tokens[]
+  comments                     comments[]
+  companies                    companies[]
+  company_users                company_users[]
+  feedbacks                    feedbacks[]
+  parcel_bookings              parcel_bookings[]
+  parcel_members               parcel_members[]
+  parcel_members_bkp           parcel_members_bkp[]
+  parcel_route_histories       parcel_route_histories[]
+  payment_methods              payment_methods[]
+  user_bank_accounts           user_bank_accounts[]
+  user_custom_hts_descriptions user_custom_hts_descriptions[]
+}
+
+model warehouse_3pl_cargo_types {
+  warehouse_3pl_cargo_type_uuid String         @id @unique @db.Uuid
+  warehouse_3pl_uuid            String         @db.Uuid
+  cargo_type_uuid               String         @db.Uuid
+  cargo_types                   cargo_types    @relation(fields: [cargo_type_uuid], references: [cargo_type_uuid])
+  warehouse_3pls                warehouse_3pls @relation(fields: [warehouse_3pl_uuid], references: [warehouse_3pl_uuid])
+
+  @@unique([warehouse_3pl_uuid, cargo_type_uuid], name: "warehouse_3pl_cargo_type_uk")
+}
+
+model warehouse_3pl_warehouse_services {
+  warehouse_3pl_warehouse_service_uuid String             @id @unique @db.Uuid
+  warehouse_3pl_uuid                   String             @db.Uuid
+  warehouse_service_uuid               String             @db.Uuid
+  warehouse_3pls                       warehouse_3pls     @relation(fields: [warehouse_3pl_uuid], references: [warehouse_3pl_uuid])
+  warehouse_services                   warehouse_services @relation(fields: [warehouse_service_uuid], references: [warehouse_service_uuid])
+
+  @@unique([warehouse_3pl_uuid, warehouse_service_uuid], name: "warehouse_3pl_warehouse_service_uk")
+}
+
+model warehouse_3pls {
+  warehouse_3pl_uuid               String                             @id @unique @db.Uuid
+  company_uuid                     String                             @unique @db.Uuid
+  companies                        companies                          @relation(fields: [company_uuid], references: [company_uuid])
+  warehouse_3pl_cargo_types        warehouse_3pl_cargo_types[]
+  warehouse_3pl_warehouse_services warehouse_3pl_warehouse_services[]
+}
+
+model warehouse_services {
+  warehouse_service_uuid           String                             @id @unique @db.Uuid
+  name                             String?                            @unique @db.VarChar(255)
+  forwarder_warehouse_services     forwarder_warehouse_services[]
+  trucking_warehouse_services      trucking_warehouse_services[]
+  warehouse_3pl_warehouse_services warehouse_3pl_warehouse_services[]
+}
+
+model week_days {
+  week_day_uuid          String                   @id @db.Uuid
+  name                   String                   @db.VarChar(255)
+  parcel_route_week_days parcel_route_week_days[]
+}
+
+model dimensional {
+  dimensional_factor_uuid String @id @db.Uuid
+  user_company_uuid       String @db.Uuid
+  value                   Float?
+}
+
+model account_manager_services {
+  account_manager_service_uuid String           @id @unique @db.Uuid
+  account_manager_uuid         String           @db.Uuid
+  service_uuid                 String           @db.Uuid
+  account_managers             account_managers @relation(fields: [account_manager_uuid], references: [account_manager_uuid])
+  services                     services         @relation(fields: [service_uuid], references: [service_uuid])
+
+  @@unique([account_manager_uuid, service_uuid], name: "account_manager_services_account_manager_uuid_service_uuid_uniq")
+}
+
+model account_managers {
+  account_manager_uuid     String                     @id @unique @db.Uuid
+  user_uuid                String                     @unique @db.Uuid
+  account_manager_services account_manager_services[]
+}
+
+model adonis_schema {
+  id             Int       @id @default(autoincrement())
+  name           String    @db.VarChar(255)
+  batch          Int
+  migration_time DateTime? @default(now()) @db.Timestamptz(6)
+}
+
+model services {
+  service_uuid             String                     @id @unique @db.Uuid
+  name                     String                     @unique
+  account_manager_services account_manager_services[]
+}
+
+model hts_codes_default {
+  description       String
+  short_description String
+  hts_code          String @id
+}
+
+model tracking_code {
+  tracking_code         String                  @id @unique
+  courier_tracking_code courier_tracking_code[]
+  feedbacks             feedbacks?
+  parcel_bookings       parcel_bookings?
+}
+
+model courier_tracking_code {
+  courier_tracking_code String        @id @unique
+  courier_type          courier
+  segment               segment
+  tracking_code_id      String
+  tracking_code         tracking_code @relation(fields: [tracking_code_id], references: [tracking_code])
+}
+
+model drop_off_locations {
+  drop_off_location_uuid              String                                @id @db.Uuid
+  name                                String                                @db.VarChar(255)
+  company_uuid                        String?                               @db.Uuid
+  warehouse_type_uuid                 String?                               @db.Uuid
+  appointment_type                    enum_appointment_types                @default(NOT_AVAILABLE)
+  email                               String?                               @db.VarChar(255)
+  phone                               Json?                                 @db.Json
+  created_at                          DateTime?                             @default(now()) @db.Timestamptz(6)
+  location_address_uuid               String?                               @db.Uuid
+  additional_instructions             String?
+  companies                           companies?                            @relation(fields: [company_uuid], references: [company_uuid])
+  locations                           locations?                            @relation(fields: [location_address_uuid], references: [location_uuid])
+  warehouse_types                     warehouse_types?                      @relation(fields: [warehouse_type_uuid], references: [warehouse_type_uuid])
+  drop_off_location_carrier_companies drop_off_location_carrier_companies[]
+  drop_off_location_modals            drop_off_location_modals[]
+  drop_off_location_opening_hours     drop_off_location_opening_hours[]
+  parcel_route_drop_off_locations     parcel_route_drop_off_locations[]
+}
+
+model drop_off_location_modals {
+  modal_uuid                   String             @db.Uuid
+  drop_off_location_uuid       String             @db.Uuid
+  drop_off_location_modal_uuid String             @id @db.Uuid
+  drop_off_locations           drop_off_locations @relation(fields: [drop_off_location_uuid], references: [drop_off_location_uuid], onDelete: Cascade)
+  modals                       modals             @relation(fields: [modal_uuid], references: [modal_uuid])
+
+  @@unique([modal_uuid, drop_off_location_uuid], name: "modal_drop_off_location_uk")
+}
+
+model drop_off_location_carrier_companies {
+  company_uuid                           String             @db.Uuid
+  drop_off_location_uuid                 String             @db.Uuid
+  drop_off_location_carrier_company_uuid String             @id @db.Uuid
+  companies                              companies          @relation(fields: [company_uuid], references: [company_uuid])
+  drop_off_locations                     drop_off_locations @relation(fields: [drop_off_location_uuid], references: [drop_off_location_uuid], onDelete: Cascade)
+
+  @@unique([company_uuid, drop_off_location_uuid], name: "carrier_company_drop_off_location_uk")
+}
+
+model drop_off_location_opening_hours {
+  drop_off_location_opening_hour_uuid String               @id @db.Uuid
+  drop_off_location_uuid              String               @db.Uuid
+  day_name                            enum_days_name_short @default(MON)
+  opening_time                        DateTime             @db.Time(6)
+  closing_time                        DateTime             @db.Time(6)
+  created_at                          DateTime?            @default(now()) @db.Timestamptz(6)
+  closed                              Boolean?             @default(false)
+  drop_off_locations                  drop_off_locations   @relation(fields: [drop_off_location_uuid], references: [drop_off_location_uuid], onDelete: Cascade)
+
+  @@unique([day_name, drop_off_location_uuid], name: "day_name_drop_off_location_uk")
+}
+
+model warehouse_types {
+  warehouse_type_uuid String               @id @db.Uuid
+  name                String               @db.VarChar(255)
+  icon                String               @db.VarChar(255)
+  drop_off_locations  drop_off_locations[]
+}
+
+model parcel_route_drop_off_locations {
+  parcel_route_drop_off_location_uuid String             @id @db.Uuid
+  drop_off_location_uuid              String             @db.Uuid
+  parcel_route_uuid                   String             @db.Uuid
+  drop_off_locations                  drop_off_locations @relation(fields: [drop_off_location_uuid], references: [drop_off_location_uuid], onDelete: Cascade)
+  parcel_routes                       parcel_routes      @relation(fields: [parcel_route_uuid], references: [parcel_route_uuid])
+}
+
+model parcel_route_first_miles {
+  parcel_route_first_mile_uuid String              @id @db.Uuid
+  parcel_rate_source_uuid      String              @db.Uuid
+  parcel_route_uuid            String              @db.Uuid
+  parcel_rate_sources          parcel_rate_sources @relation(fields: [parcel_rate_source_uuid], references: [parcel_rate_source_uuid])
+  parcel_routes                parcel_routes       @relation(fields: [parcel_route_uuid], references: [parcel_route_uuid])
+}
+
+model parcel_route_last_miles {
+  parcel_route_last_mile_uuid String              @id @db.Uuid
+  parcel_rate_source_uuid     String              @db.Uuid
+  parcel_route_uuid           String              @db.Uuid
+  parcel_rate_sources         parcel_rate_sources @relation(fields: [parcel_rate_source_uuid], references: [parcel_rate_source_uuid])
+  parcel_routes               parcel_routes       @relation(fields: [parcel_route_uuid], references: [parcel_route_uuid])
+}
+
+model drivers {
+  driver_uuid            String                  @id @db.Uuid
+  first_name             String?                 @db.VarChar(255)
+  last_name              String?                 @db.VarChar(255)
+  photo                  String?                 @db.VarChar(255)
+  email                  String?                 @db.VarChar(255)
+  phone                  Json?
+  license_number         String?                 @db.VarChar(255)
+  sta_license_status     enum_sta_license_status @default(NO)
+  sta_number             String?                 @db.VarChar(255)
+  sta_expiration_date    DateTime?               @db.Timestamptz(6)
+  iacssp_training_date   DateTime?               @db.Timestamptz(6)
+  iacssp_expiration_date DateTime?               @db.Timestamptz(6)
+  company_uuid           String                  @db.Uuid
+  companies              companies               @relation(fields: [company_uuid], references: [company_uuid])
+}
+
+model parcel_route_histories {
+  user_uuid                 String        @db.Uuid
+  comment                   String?
+  parcel_route_uuid         String        @db.Uuid
+  created_at                DateTime?     @default(now()) @db.Timestamptz(6)
+  parcel_route_history_uuid String        @id @db.Uuid
+  parcel_routes             parcel_routes @relation(fields: [parcel_route_uuid], references: [parcel_route_uuid])
+  users                     users         @relation(fields: [user_uuid], references: [user_uuid])
+}
+
+model uk_states_mapping_ups {
+  uk_states_mapping_ups_uuid String @id @db.Uuid
+  code                       String
+  state                      String
+}
+
+enum enum_sta_license_status {
+  NO
+  YES
+  IN_PROGRESS
+}
+
+enum enum_modal {
+  PARCEL
+  LAND
+  AIR
+  SEA
+}
+
+enum segment {
+  PICK_UP
+  PARCEL_FREIGHT
+  LAST_MILE
+}
+
+enum courier {
+  USPS
+  UPS
+  DHL
+  SKYPOSTAL
+  FEDEX
+  BPS
+  CLEARLANE
+  CORREIOS
+}
+
+enum enum_users_type {
+  NORMAL
+  ADMIN
+}
+
+enum enum_company_relationships_connected {
+  PENDING
+  CONNECTED
+  REFUSED
+}
+
+enum enum_rules_type {
+  MINIMUM
+  MAXIMUM
+}
+
+enum enum_length_measure {
+  IN
+  CM
+}
+
+enum enum_weight_measure {
+  LB
+  KG
+}
+
+enum enum_coin {
+  USD
+}
+
+enum enum_location_type {
+  ORIGIN
+  DESTINATION
+}
+
+enum enum_coverage {
+  NATIONWIDE
+  STATEWIDE
+  CITY
+  ADDRESS
+  AIRPORT
+  PORT
+}
+
+enum enum_applicable_to {
+  CARGO_VALUE
+  GROSS_WEIGHT
+  CIF_VALUE
+  RESIDENTIAL
+}
+
+enum enum_minimum_per {
+  SHIPMENT
+  PACKAGE
+}
+
+enum enum_role {
+  MANDATORY
+  OPTIONAL_SERVICE
+  NOT_VISIBLE
+}
+
+enum enum_preposition {
+  WHEN
+  AND
+  OR
+}
+
+enum enum_condition_cif {
+  IS_MORE_THAN
+  IS_LESS_THAN
+}
+
+enum enum_condition_address {
+  IS
+  IS_NOT
+}
+
+enum enum_condition_user {
+  IS
+  IS_NOT
+}
+
+enum enum_condition_parcel {
+  IS
+  IS_NOT
+}
+
+enum enum_condition_rate {
+  IS
+  IS_NOT
+}
+
+enum enum_user_type {
+  INDIVIDUAL
+  CORPORATION
+}
+
+enum enum_parcel_type {
+  DOCUMENTS
+  PACKAGE
+}
+
+enum enum_rate_type {
+  POSTAL
+  ECONOMY
+  EXPRESS
+}
+
+enum enum_address_type {
+  RESIDENTIAL
+  COMMERCIAL
+}
+
+enum enum_parcel_booking_payment_status {
+  OPEN
+  OVERDUE
+  IN_PROGRESS
+  PAID
+  DISCREPANCIES
+  REFUNDED
+}
+
+enum enum_parcel_member_type {
+  INDIVIDUAL
+  CORPORATION
+}
+
+enum enum_parcel_member_pre_filled {
+  USER
+  COMPANY
+  MEMBER
+  ADDRESS
+  AIRPORT
+}
+
+enum enum_appointment_types {
+  REQUIRED
+  OPTIONAL
+  NOT_AVAILABLE
+}
+
+enum enum_days_name_short {
+  MON
+  TUE
+  WED
+  THU
+  FRI
+  SAT
+  SUN
+}
